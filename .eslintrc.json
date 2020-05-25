@@ -1,0 +1,34 @@
+{
+  "plugins": ["github", "eslint-plugin-tsdoc"],
+  "extends": ["plugin:github/recommended", "plugin:github/typescript"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 9,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "rules": {
+    "import/no-namespace": "off",
+    "tsdoc/syntax": "warn"
+  },
+  "env": {
+    "node": true,
+    "es6": true
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.spec.ts", "src/**/*.test.ts", "tests/**/*.ts", "jest.config.js"],
+      "plugins": ["jest", "github", "eslint-plugin-tsdoc"],
+      "parserOptions": {
+        "ecmaVersion": 9,
+        "sourceType": "module",
+        "project": "./tsconfig.tests.json"
+      },
+      "env": {
+        "node": true,
+        "es6": true,
+        "jest/globals": true
+      }
+    }
+  ]
+}
