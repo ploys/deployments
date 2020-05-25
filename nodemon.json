@@ -1,0 +1,7 @@
+{
+  "signal": "SIGINT",
+  "watch": ["lib"],
+  "delay": "3000",
+  "verbose": false,
+  "exec": ["npm run start"]
+}
