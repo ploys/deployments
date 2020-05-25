@@ -1,5 +1,6 @@
 import * as http from 'http'
 
+import EventSource from 'eventsource'
 import { Webhooks } from '@octokit/webhooks'
 
 /**
@@ -28,8 +29,31 @@ export class Application {
 
   /**
    * Starts the application.
+   *
+   * @param proxy - The optional proxy server URL.
    */
-  start(): http.Server {
-    return http.createServer(this.webhooks.middleware).listen(3000)
+  start(proxy?: string): http.Server {
+    const server = http.createServer(this.webhooks.middleware)
+
+    if (proxy) {
+      const source = new EventSource(proxy)
+
+      source.onmessage = event => {
+        const webhookEvent = JSON.parse(event.data)
+
+        try {
+          this.webhooks.verifyAndReceive({
+            id: webhookEvent['x-request-id'],
+            name: webhookEvent['x-github-event'],
+            signature: webhookEvent['x-hub-signature'],
+            payload: webhookEvent.body,
+          })
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    }
+
+    return server.listen(3000)
   }
 }
