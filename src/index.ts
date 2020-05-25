@@ -10,7 +10,7 @@ function run(): void {
   })
 
   app.initialize()
-  app.start()
+  app.start(process.env.WEBHOOK_PROXY_URL)
 }
 
 run()
