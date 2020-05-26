@@ -159,6 +159,10 @@ export class Application {
    * @param event - The event.
    */
   private async onPush(event: Webhooks.WebhookEvent<Webhooks.WebhookPayloadPush>): Promise<void> {
+    if (event.payload.deleted) {
+      return
+    }
+
     const ctx = new Context(this, event)
     const api = await ctx.api()
     const cfg = await config.list(ctx, event.payload.after, '.github/deployments')
