@@ -165,6 +165,7 @@ export class Application {
 
     for (const [id, [err]] of util.entries(cfg)) {
       if (err) {
+        await api.checks.createSuite({ ...ctx.repo, head_sha: event.payload.after })
         await api.checks.create({
           ...ctx.repo,
           name: `deployments/${id}`,

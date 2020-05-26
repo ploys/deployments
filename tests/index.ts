@@ -110,6 +110,8 @@ describe('application', () => {
         }),
       })
 
+    nock('https://api.github.com').post('/repos/ploys/tests/check-suites').reply(200)
+
     nock('https://api.github.com')
       .post('/repos/ploys/tests/check-runs', body => {
         expect(body).toMatchObject({
