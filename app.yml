@@ -1,0 +1,10 @@
+name: Deployments
+description: Automated continuous deployment and delivery.
+url: https://github.com/ploys/deployments
+public: false
+
+default_events:
+- push
+
+default_permissions:
+  metadata: read
