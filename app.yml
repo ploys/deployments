@@ -4,7 +4,10 @@ url: https://github.com/ploys/deployments
 public: false
 
 default_events:
+- installation
+- installation_repositories
 - push
 
 default_permissions:
+  checks: write
   metadata: read
