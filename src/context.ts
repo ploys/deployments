@@ -77,6 +77,8 @@ export class Context<T> {
 
   /**
    * Gets the installation identifier.
+   *
+   * @returns The promised installation identifier.
    */
   async installation(): Promise<number> {
     if (this.event.payload.installation?.id) {

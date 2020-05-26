@@ -9,6 +9,7 @@ import type { Types } from '@octokit/auth-app'
 import type { AuthInterface } from '@octokit/types'
 
 import { Context } from './context'
+import { Installation } from './installation'
 
 /**
  * The application options.
@@ -40,6 +41,15 @@ export class Application {
   }
 
   /**
+   * Gets the application identifier.
+   *
+   * @returns The application identifier.
+   */
+  id(): number {
+    return this.options.id
+  }
+
+  /**
    * Initializes the application.
    */
   initialize(): void {
@@ -51,9 +61,9 @@ export class Application {
       console.log(res)
     })
 
-    this.webhooks.on('error', error => {
-      console.error(error)
-    })
+    this.webhooks.on('installation.created', this.onInstallation.bind(this))
+    this.webhooks.on('installation_repositories.added', this.onRepositoriesAdded.bind(this))
+    this.webhooks.on('error', error => console.error(error))
   }
 
   /**
@@ -106,5 +116,45 @@ export class Application {
     }
 
     return server.listen(3000)
+  }
+
+  /**
+   * Handles the *installation created* event.
+   *
+   * @param event - The event.
+   */
+  private async onInstallation(
+    event: Webhooks.WebhookEvent<Webhooks.WebhookPayloadInstallation>
+  ): Promise<void> {
+    const installation = new Installation(this, {
+      id: event.payload.installation.id,
+      repos: event.payload.repositories.map(repository => {
+        const [owner, repo] = repository.full_name.split('/', 2)
+
+        return { id: repository.id, owner, repo }
+      }),
+    })
+
+    await installation.install()
+  }
+
+  /**
+   * Handles the *installation repositories added* event.
+   *
+   * @param event - The event.
+   */
+  private async onRepositoriesAdded(
+    event: Webhooks.WebhookEvent<Webhooks.WebhookPayloadInstallationRepositories>
+  ): Promise<void> {
+    const installation = new Installation(this, {
+      id: event.payload.installation.id,
+      repos: event.payload.repositories_added.map(repository => {
+        const [owner, repo] = repository.full_name.split('/', 2)
+
+        return { id: repository.id, owner, repo }
+      }),
+    })
+
+    await installation.install()
   }
 }

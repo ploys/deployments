@@ -11,9 +11,14 @@
   "repository_selection": "selected",
   "target_type": "User",
   "permissions": {
+    "checks": "write",
     "metadata": "read"
   },
-  "events": [],
+  "events": [
+    "installation",
+    "installation_repositories",
+    "push"
+  ],
   "created_at": 1590436800,
   "updated_at": 1590436800,
   "single_file_name": null
