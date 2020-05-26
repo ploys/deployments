@@ -12,6 +12,7 @@
   "target_type": "User",
   "permissions": {
     "checks": "write",
+    "contents": "read",
     "metadata": "read"
   },
   "events": [

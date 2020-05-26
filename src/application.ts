@@ -8,6 +8,8 @@ import { createAppAuth } from '@octokit/auth-app'
 import type { Types } from '@octokit/auth-app'
 import type { AuthInterface } from '@octokit/types'
 
+import * as config from './config'
+import * as util from './util'
 import { Context } from './context'
 import { Installation } from './installation'
 
@@ -53,16 +55,9 @@ export class Application {
    * Initializes the application.
    */
   initialize(): void {
-    this.webhooks.on('push', async event => {
-      const ctx = new Context(this, event)
-      const api = await ctx.api()
-      const res = await api.repos.listCommits(ctx.repo)
-
-      console.log(res)
-    })
-
     this.webhooks.on('installation.created', this.onInstallation.bind(this))
     this.webhooks.on('installation_repositories.added', this.onRepositoriesAdded.bind(this))
+    this.webhooks.on('push', this.onPush.bind(this))
     this.webhooks.on('error', error => console.error(error))
   }
 
@@ -156,5 +151,34 @@ export class Application {
     })
 
     await installation.install()
+  }
+
+  /**
+   * Handles the *push* event.
+   *
+   * @param event - The event.
+   */
+  private async onPush(event: Webhooks.WebhookEvent<Webhooks.WebhookPayloadPush>): Promise<void> {
+    const ctx = new Context(this, event)
+    const api = await ctx.api()
+    const cfg = await config.list(ctx, event.payload.after, '.github/deployments')
+
+    for (const [id, [err]] of util.entries(cfg)) {
+      if (err) {
+        await api.checks.create({
+          ...ctx.repo,
+          name: `deployments/${id}`,
+          head_sha: event.payload.after,
+          external_id: id,
+          status: 'completed',
+          conclusion: 'failure',
+          output: {
+            title: 'Invalid',
+            summary: `Invalid deployment configuration for the ${id} environment.`,
+            text: `## Error\n\n\`\`\`\n${err.message}\n\`\`\``,
+          },
+        })
+      }
+    }
   }
 }
