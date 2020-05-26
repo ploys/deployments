@@ -1,0 +1,20 @@
+{
+  "id": 1,
+  "app_id": 1,
+  "target_id": 1,
+  "account": {
+    "id": 1,
+    "type": "User",
+    "login": "ploys",
+    "site_admin": false
+  },
+  "repository_selection": "selected",
+  "target_type": "User",
+  "permissions": {
+    "metadata": "read"
+  },
+  "events": [],
+  "created_at": 1590436800,
+  "updated_at": 1590436800,
+  "single_file_name": null
+}

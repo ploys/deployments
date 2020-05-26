@@ -1,0 +1,23 @@
+{
+  "token": "test",
+  "expires_at": "2025-05-25T20:00:00Z",
+  "permissions": {
+    "metadata": "read"
+  },
+  "repositories": [
+    {
+      "id": 1,
+      "name": "tests",
+      "full_name": "ploys/tests",
+      "owner": {
+        "id": 1,
+        "type": "User",
+        "name": "ploys",
+        "login": "ploys"
+      },
+      "private": false,
+      "default_branch": "master",
+      "visibility": "public"
+    }
+  ]
+}
