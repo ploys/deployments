@@ -55,7 +55,7 @@ describe('application', () => {
     await app.webhooks.receive({ id: '1', name: 'installation', payload: installationCreated })
   })
 
-  test('validates configuration on push', async done => {
+  test('creates a check run for invalid configuration on push', async done => {
     nock('https://api.github.com')
       .persist()
       .get('/repos/ploys/tests/installation')
@@ -70,30 +70,10 @@ describe('application', () => {
       .reply(200, [
         {
           type: 'file',
-          name: 'valid.yml',
-          path: '.github/deployments/valid.yml',
-        },
-        {
-          type: 'file',
           name: 'invalid.yml',
           path: '.github/deployments/invalid.yml',
         },
       ])
-
-    nock('https://api.github.com')
-      .get('/repos/ploys/tests/contents/.github%2Fdeployments%2Fvalid.yml')
-      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
-      .reply(200, {
-        type: 'file',
-        name: 'valid.yml',
-        path: '.github/deployments/valid.yml',
-        encoding: 'base64',
-        content: encode({
-          id: 'valid',
-          name: 'valid',
-          description: 'The valid deployment configuration',
-        }),
-      })
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fdeployments%2Finvalid.yml')
@@ -119,6 +99,60 @@ describe('application', () => {
           external_id: 'invalid',
           status: 'completed',
           conclusion: 'failure',
+        })
+        done()
+        return true
+      })
+      .matchHeader('accept', 'application/vnd.github.antiope-preview+json')
+      .reply(200)
+
+    await app.webhooks.receive({ id: '1', name: 'push', payload: push })
+  })
+
+  test('creates a check run for valid configuration on push', async done => {
+    nock('https://api.github.com')
+      .persist()
+      .get('/repos/ploys/tests/installation')
+      .reply(200, installation)
+
+    nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
+    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fdeployments')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'valid.yml',
+          path: '.github/deployments/valid.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fdeployments%2Fvalid.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'valid.yml',
+        path: '.github/deployments/valid.yml',
+        encoding: 'base64',
+        content: encode({
+          id: 'valid',
+          name: 'valid',
+          description: 'The valid deployment configuration',
+        }),
+      })
+
+    nock('https://api.github.com').post('/repos/ploys/tests/check-suites').reply(200)
+
+    nock('https://api.github.com')
+      .post('/repos/ploys/tests/check-runs', body => {
+        expect(body).toMatchObject({
+          name: 'deployments/valid',
+          external_id: 'valid',
+          status: 'completed',
+          conclusion: 'neutral',
         })
         done()
         return true

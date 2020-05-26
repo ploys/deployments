@@ -165,9 +165,9 @@ export class Application {
 
     const ctx = new Context(this, event)
     const api = await ctx.api()
-    const cfg = await config.list(ctx, event.payload.after, '.github/deployments')
+    const cfgs = await config.list(ctx, event.payload.after, '.github/deployments')
 
-    for (const [id, [err]] of util.entries(cfg)) {
+    for (const [id, [err, cfg]] of util.entries(cfgs)) {
       if (err) {
         await api.checks.createSuite({ ...ctx.repo, head_sha: event.payload.after })
         await api.checks.create({
@@ -181,6 +181,22 @@ export class Application {
             title: 'Invalid',
             summary: `Invalid deployment configuration for the ${id} environment.`,
             text: `## Error\n\n\`\`\`\n${err.message}\n\`\`\``,
+          },
+        })
+      }
+
+      if (cfg) {
+        await api.checks.createSuite({ ...ctx.repo, head_sha: event.payload.after })
+        await api.checks.create({
+          ...ctx.repo,
+          name: `deployments/${id}`,
+          head_sha: event.payload.after,
+          external_id: id,
+          status: 'completed',
+          conclusion: 'neutral',
+          output: {
+            title: 'Ready',
+            summary: `Ready for deployment to the ${id} environment.`,
           },
         })
       }
