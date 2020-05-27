@@ -167,9 +167,13 @@ export class Application {
     const api = await ctx.api()
     const cfgs = await config.list(ctx, event.payload.after, '.github/deployments')
 
+    const once = util.once(async () => {
+      await api.checks.createSuite({ ...ctx.repo, head_sha: event.payload.after })
+    })
+
     for (const [id, [err, cfg]] of util.entries(cfgs)) {
       if (err) {
-        await api.checks.createSuite({ ...ctx.repo, head_sha: event.payload.after })
+        await once()
         await api.checks.create({
           ...ctx.repo,
           name: `deployments/${id}`,
@@ -186,7 +190,7 @@ export class Application {
       }
 
       if (cfg) {
-        await api.checks.createSuite({ ...ctx.repo, head_sha: event.payload.after })
+        await once()
         await api.checks.create({
           ...ctx.repo,
           name: `deployments/${id}`,
