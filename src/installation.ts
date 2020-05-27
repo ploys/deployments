@@ -3,36 +3,42 @@ import type { Types } from '@octokit/auth-app'
 import { Octokit } from '@octokit/rest'
 
 import { Application } from './application'
-
-/**
- * The repository information.
- */
-export type Repository = { id: number; repo: string; owner: string }
+import { Repository } from './repository'
 
 /**
  * The installation options.
  */
 export type Options = {
   id: number
-  repos: Repository[]
+  repos: RepositoryInfo[]
 }
 
 /**
- * The installation.
+ * The repository information.
+ */
+export type RepositoryInfo = {
+  id: number
+  name: string
+  owner: string
+}
+
+/**
+ * The installation context.
  */
 export class Installation {
-  private application: Application
-  private options: Options
+  private inner: {
+    app: Application
+    options: Options
+  }
 
   /**
-   * Creates the installation.
+   * Creates the installation context.
    *
    * @param app - The application.
    * @param options - The installation options.
    */
   constructor(app: Application, options: Options) {
-    this.application = app
-    this.options = options
+    this.inner = { app, options }
   }
 
   /**
@@ -41,7 +47,7 @@ export class Installation {
    * @returns The installation identifier.
    */
   id(): number {
-    return this.options.id
+    return this.inner.options.id
   }
 
   /**
@@ -50,23 +56,57 @@ export class Installation {
    * @returns The application.
    */
   app(): Application {
-    return this.application
+    return this.inner.app
   }
 
   /**
    * Gets the installation repositories.
+   *
+   * @returns The installation repositories.
    */
-  repos(): Repository[] {
-    return this.options.repos
+  repos(): RepositoryInfo[] {
+    return this.inner.options.repos
   }
 
   /**
-   * Authenticates the installation.
+   * Gets an installation repository.
    *
-   * @returns The promised authentication.
+   * @param id - The repository identifier.
+   *
+   * @returns The installation repository, if it exists.
+   */
+  repo(id: number): RepositoryInfo | undefined {
+    const repos = this.repos().filter(repo => repo.id === id)
+
+    if (repos.length > 0) {
+      return repos[0]
+    }
+  }
+
+  /**
+   * Gets the repository context.
+   *
+   * @param id - The repository identifier.
+   *
+   * @returns The promised repository context.
+   */
+  async repository(id: number): Promise<Repository> {
+    const repo = this.repo(id)
+
+    if (repo) {
+      return new Repository(this, repo)
+    }
+
+    throw new Error(`No repository '${id}' for installation '${this.id()}'`)
+  }
+
+  /**
+   * Gets the installation authentication.
+   *
+   * @returns The promised installation authentication.
    */
   async auth(): Promise<Types['Authentication']> {
-    return await this.app().authenticator({
+    return await this.app().authenticate({
       type: 'installation',
       installationId: this.id(),
       repositoryIds: this.repos().map(repo => repo.id),
@@ -85,18 +125,13 @@ export class Installation {
   }
 
   /**
-   * Installs the application for the installation.
+   * Installs the application for the installation repositories.
    */
   async install(): Promise<void> {
-    const app = this.app().id()
-    const api = await this.api()
+    for (const data of this.repos()) {
+      const repo = await this.repository(data.id)
 
-    for (const repo of this.repos()) {
-      await api.checks.setSuitesPreferences({
-        owner: repo.owner,
-        repo: repo.repo,
-        auto_trigger_checks: [{ app_id: app, setting: false }],
-      })
+      repo.install()
     }
   }
 }

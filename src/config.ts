@@ -4,7 +4,7 @@ import to from 'await-to-js'
 import yaml from 'js-yaml'
 import Joi from '@hapi/joi'
 
-import { Context } from './context'
+import { Repository } from './repository'
 
 /**
  * The deployment configuration.
@@ -98,15 +98,15 @@ export function defaults(path: string): Partial<Config> {
 /**
  * Loads deployment configuration from the repository.
  *
- * @param ctx - The context.
+ * @param ctx - The repository context.
  * @param ref - The commit reference.
  * @param path - The config file path.
  *
  * @returns The promised deployment configuration.
  */
-export async function load(ctx: Context<any>, ref: string, path: string): Promise<Config> {
+export async function load(ctx: Repository, ref: string, path: string): Promise<Config> {
   const api = await ctx.api()
-  const res = await api.repos.getContents({ ...ctx.repo, ref, path })
+  const res = await api.repos.getContents({ ...ctx.params(), ref, path })
 
   if (Array.isArray(res.data)) {
     throw new Error(`Expected file, found directory at '${path}' for '${ref}'`)
@@ -130,15 +130,15 @@ export async function load(ctx: Context<any>, ref: string, path: string): Promis
 /**
  * Lists the deployment configuration.
  *
- * @param ctx - The context.
+ * @param ctx - The repository context.
  * @param ref - The commit reference.
  * @param path - The config directory.
  *
  * @returns The promised list of deployment configuration.
  */
-export async function list(ctx: Context<any>, ref: string, path: string): Promise<ConfigList> {
+export async function list(ctx: Repository, ref: string, path: string): Promise<ConfigList> {
   const api = await ctx.api()
-  const res = await api.repos.getContents({ ...ctx.repo, ref, path })
+  const res = await api.repos.getContents({ ...ctx.params(), ref, path })
   const items: ConfigList = {}
 
   if (Array.isArray(res.data)) {

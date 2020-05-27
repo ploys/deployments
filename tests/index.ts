@@ -53,7 +53,7 @@ describe('application', () => {
       })
       .reply(200, {})
 
-    await app.webhooks.receive({ id: '1', name: 'installation', payload: installationCreated })
+    await app.webhooks().receive({ id: '1', name: 'installation', payload: installationCreated })
   })
 
   test('creates a check run for invalid configuration on push', async done => {
@@ -113,7 +113,7 @@ describe('application', () => {
       .matchHeader('accept', 'application/vnd.github.antiope-preview+json')
       .reply(200)
 
-    await app.webhooks.receive({ id: '1', name: 'push', payload: push })
+    await app.webhooks().receive({ id: '1', name: 'push', payload: push })
   })
 
   test('creates a check run for valid configuration on push', async done => {
@@ -173,7 +173,7 @@ describe('application', () => {
       .matchHeader('accept', 'application/vnd.github.antiope-preview+json')
       .reply(200)
 
-    await app.webhooks.receive({ id: '1', name: 'push', payload: push })
+    await app.webhooks().receive({ id: '1', name: 'push', payload: push })
   })
 
   test('supports multiple deployment configurations', async done => {
@@ -267,7 +267,7 @@ describe('application', () => {
       .matchHeader('accept', 'application/vnd.github.antiope-preview+json')
       .reply(200)
 
-    await app.webhooks.receive({ id: '1', name: 'push', payload: push })
+    await app.webhooks().receive({ id: '1', name: 'push', payload: push })
   })
 
   test('creates a check run on pull request to master branch', async done => {
@@ -331,6 +331,6 @@ describe('application', () => {
       .matchHeader('accept', 'application/vnd.github.antiope-preview+json')
       .reply(200)
 
-    await app.webhooks.receive({ id: '1', name: 'pull_request', payload: pull_request })
+    await app.webhooks().receive({ id: '1', name: 'pull_request', payload: pull_request })
   })
 })
