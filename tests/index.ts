@@ -162,4 +162,91 @@ describe('application', () => {
 
     await app.webhooks.receive({ id: '1', name: 'push', payload: push })
   })
+
+  test('supports multiple deployment configurations', async done => {
+    nock('https://api.github.com')
+      .persist()
+      .get('/repos/ploys/tests/installation')
+      .reply(200, installation)
+
+    nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
+    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fdeployments')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'staging.yml',
+          path: '.github/deployments/staging.yml',
+        },
+        {
+          type: 'file',
+          name: 'production.yml',
+          path: '.github/deployments/production.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fdeployments%2Fstaging.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'staging.yml',
+        path: '.github/deployments/staging.yml',
+        encoding: 'base64',
+        content: encode({
+          id: 'staging',
+          name: 'staging',
+          description: 'The staging deployment configuration',
+        }),
+      })
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fdeployments%2Fproduction.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'production.yml',
+        path: '.github/deployments/production.yml',
+        encoding: 'base64',
+        content: encode({
+          id: 'production',
+          name: 'production',
+          description: 'The production deployment configuration',
+        }),
+      })
+
+    nock('https://api.github.com').post('/repos/ploys/tests/check-suites').reply(200)
+
+    nock('https://api.github.com')
+      .post('/repos/ploys/tests/check-runs', body => {
+        expect(body).toMatchObject({
+          name: 'deployments/staging',
+          external_id: 'staging',
+          status: 'completed',
+          conclusion: 'neutral',
+        })
+        return true
+      })
+      .matchHeader('accept', 'application/vnd.github.antiope-preview+json')
+      .reply(200)
+
+    nock('https://api.github.com')
+      .post('/repos/ploys/tests/check-runs', body => {
+        expect(body).toMatchObject({
+          name: 'deployments/production',
+          external_id: 'production',
+          status: 'completed',
+          conclusion: 'neutral',
+        })
+        done()
+        return true
+      })
+      .matchHeader('accept', 'application/vnd.github.antiope-preview+json')
+      .reply(200)
+
+    await app.webhooks.receive({ id: '1', name: 'push', payload: push })
+  })
 })
