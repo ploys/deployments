@@ -1,7 +1,12 @@
 /**
+ * A value that is never undefined.
+ */
+export type Defined<T> = T extends undefined ? never : T
+
+/**
  * Gets the entries of an object.
  *
- * Like Object.entries but with non-nullable values.
+ * Like Object.entries but with defined values.
  *
  * @param object - The object.
  *
@@ -9,8 +14,8 @@
  */
 export function entries<T>(
   object: { [s: string]: T } | ArrayLike<T> | undefined
-): Array<[string, NonNullable<T>]> {
-  return Object.entries(object || {}) as Array<[string, NonNullable<T>]>
+): Array<[string, Defined<T>]> {
+  return Object.entries(object || {}) as Array<[string, Defined<T>]>
 }
 
 /**
