@@ -4,7 +4,8 @@
   "permissions": {
     "checks": "write",
     "contents": "read",
-    "metadata": "read"
+    "metadata": "read",
+    "pull_requests": "read"
   },
   "repositories": [
     {

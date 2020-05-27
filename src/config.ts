@@ -13,6 +13,7 @@ export type Config = {
   id: string
   name: string
   description: string
+  on: Triggers
 }
 
 /**
@@ -20,6 +21,28 @@ export type Config = {
  */
 export type ConfigList = {
   [key: string]: [Error | null, Config | undefined] | undefined
+}
+
+/**
+ * The deployment configuration triggers.
+ */
+export type Triggers =
+  | TriggerName
+  | TriggerName[]
+  | { push: Trigger | null }
+  | { pull_request: Trigger | null }
+  | { push: Trigger | null; pull_request: Trigger | null }
+
+/**
+ * The deployment configuration trigger name.
+ */
+export type TriggerName = 'push' | 'pull_request'
+
+/**
+ * The deployment configuration trigger.
+ */
+export type Trigger = {
+  branches?: string[]
 }
 
 /**
@@ -35,6 +58,26 @@ export function schema(): Joi.ObjectSchema<any> {
     id: Joi.string().pattern(new RegExp('^[a-zA-Z0-9-]{2,30}$')).min(2).max(30).required(),
     name: Joi.string().alphanum().min(2).max(30).required(),
     description: Joi.string().max(140).required(),
+    on: Joi.alternatives(
+      Joi.string().valid('push', 'pull_request').required(),
+      Joi.array().items(Joi.string().valid('push', 'pull_request').required()).required(),
+      Joi.object({
+        push: Joi.alternatives(
+          null,
+          Joi.object({
+            branches: Joi.array().items(Joi.string().required()),
+          })
+        ),
+        pull_request: Joi.alternatives(
+          null,
+          Joi.object({
+            branches: Joi.array().items(Joi.string().required()),
+          })
+        ),
+      })
+        .or('push', 'pull_request')
+        .required()
+    ).required(),
   })
 }
 
@@ -116,4 +159,29 @@ export async function list(ctx: Context<any>, ref: string, path: string): Promis
   }
 
   return items
+}
+
+/**
+ * Checks if deployment configuration applies to the given branch and trigger.
+ *
+ * @param cfg - The deployment configuration.
+ * @param trigger - The deployment trigger.
+ * @param branch - The branch name.
+ */
+export function applies(cfg: Config, trigger: TriggerName, branch: string): boolean {
+  if (Array.isArray(cfg.on)) {
+    return cfg.on.includes(trigger)
+  }
+
+  if (typeof cfg.on === 'string') {
+    return cfg.on === trigger
+  }
+
+  const tr = (cfg.on as any)[trigger] as Trigger | null | undefined
+
+  if (tr === undefined || (tr && tr.branches && !tr.branches.includes(branch))) {
+    return false
+  }
+
+  return true
 }

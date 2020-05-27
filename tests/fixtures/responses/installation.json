@@ -13,11 +13,13 @@
   "permissions": {
     "checks": "write",
     "contents": "read",
-    "metadata": "read"
+    "metadata": "read",
+    "pull_requests": "read"
   },
   "events": [
     "installation",
     "installation_repositories",
+    "pull_request",
     "push"
   ],
   "created_at": 1590436800,
