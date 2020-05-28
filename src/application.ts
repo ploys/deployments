@@ -72,6 +72,7 @@ export class Application {
     hooks.on('push', this.onPush.bind(this))
     hooks.on('pull_request.opened', this.onPullRequest.bind(this))
     hooks.on('pull_request.synchronize', this.onPullRequest.bind(this))
+    hooks.on('check_run.requested_action', this.onCheckRunRequestedAction.bind(this))
     hooks.on('check_run.created', this.onCheckRunCreated.bind(this))
     hooks.on('check_suite.completed', this.onCheckSuiteCompleted.bind(this))
     hooks.on('error', error => console.error(error))
@@ -240,6 +241,24 @@ export class Application {
     const repo = await inst.repository(event.payload.repository.id)
 
     await repo.deploy(sha, ref, 'pull_request')
+  }
+
+  /**
+   * Handles the *check run requested action* event.
+   *
+   * @param event - The event object.
+   */
+  private async onCheckRunRequestedAction(
+    event: Webhooks.WebhookEvent<Webhooks.WebhookPayloadCheckRun>
+  ): Promise<void> {
+    const sha = event.payload.check_run.head_sha
+    const env = event.payload.check_run.external_id
+    const run = event.payload.check_run.id
+
+    const inst = await this.installation(event)
+    const repo = await inst.repository(event.payload.repository.id)
+
+    await repo.request(sha, env, run)
   }
 
   /**

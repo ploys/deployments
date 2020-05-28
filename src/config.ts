@@ -31,12 +31,16 @@ export type Triggers =
   | TriggerName[]
   | { push: Trigger | null }
   | { pull_request: Trigger | null }
+  | { manual: Trigger | null }
   | { push: Trigger | null; pull_request: Trigger | null }
+  | { push: Trigger | null; pull_request: Trigger | null; manual: Trigger | null }
+  | { push: Trigger | null; manual: Trigger | null }
+  | { pull_request: Trigger | null; manual: Trigger | null }
 
 /**
  * The deployment configuration trigger name.
  */
-export type TriggerName = 'push' | 'pull_request'
+export type TriggerName = 'push' | 'pull_request' | 'manual'
 
 /**
  * The deployment configuration trigger.
@@ -59,8 +63,8 @@ export function schema(): Joi.ObjectSchema<any> {
     name: Joi.string().alphanum().min(2).max(30).required(),
     description: Joi.string().max(140).required(),
     on: Joi.alternatives(
-      Joi.string().valid('push', 'pull_request').required(),
-      Joi.array().items(Joi.string().valid('push', 'pull_request').required()).required(),
+      Joi.string().valid('push', 'pull_request', 'manual').required(),
+      Joi.array().items(Joi.string().valid('push', 'pull_request', 'manual').required()).required(),
       Joi.object({
         push: Joi.alternatives(
           null,
@@ -74,8 +78,14 @@ export function schema(): Joi.ObjectSchema<any> {
             branches: Joi.array().items(Joi.string().required()),
           })
         ),
+        manual: Joi.alternatives(
+          null,
+          Joi.object({
+            branches: Joi.array().items(Joi.string().required()),
+          })
+        ),
       })
-        .or('push', 'pull_request')
+        .or('push', 'pull_request', 'manual')
         .required()
     ).required(),
   })

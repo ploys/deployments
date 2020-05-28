@@ -71,9 +71,16 @@ export async function ready(ctx: Repository, env: string, run: CheckRun): Promis
     check_run_id: run.id,
     status: 'completed',
     conclusion: 'neutral',
+    actions: [
+      {
+        identifier: 'deploy',
+        label: 'Deploy',
+        description: `Deploy to ${env}`,
+      },
+    ],
     output: {
-      title: 'Ready',
-      summary: `Ready for deployment to the ${env} environment.`,
+      title: 'Not deployed',
+      summary: `Not deployed to the ${env} environment.`,
     },
   })
 }

@@ -20,21 +20,29 @@ describe('config', () => {
   test('validates string trigger', () => {
     valid({ ...defaults, on: 'push' })
     valid({ ...defaults, on: 'pull_request' })
+    valid({ ...defaults, on: 'manual' })
 
     invalid({ ...defaults, on: '' })
     invalid({ ...defaults, on: 'other' })
 
     applies({ ...defaults, on: 'push' }, 'push', 'one', true)
     applies({ ...defaults, on: 'pull_request' }, 'pull_request', 'one', true)
+    applies({ ...defaults, on: 'manual' }, 'manual', 'one', true)
 
     applies({ ...defaults, on: 'push' }, 'pull_request', 'one', false)
+    applies({ ...defaults, on: 'push' }, 'manual', 'one', false)
     applies({ ...defaults, on: 'pull_request' }, 'push', 'one', false)
+    applies({ ...defaults, on: 'pull_request' }, 'manual', 'one', false)
+    applies({ ...defaults, on: 'manual' }, 'push', 'one', false)
+    applies({ ...defaults, on: 'manual' }, 'pull_request', 'one', false)
   })
 
   test('validates array trigger', () => {
     valid({ ...defaults, on: ['push'] })
     valid({ ...defaults, on: ['pull_request'] })
+    valid({ ...defaults, on: ['manual'] })
     valid({ ...defaults, on: ['push', 'pull_request'] })
+    valid({ ...defaults, on: ['push', 'pull_request', 'manual'] })
 
     invalid({ ...defaults, on: [] })
     invalid({ ...defaults, on: ['other'] })
@@ -42,9 +50,11 @@ describe('config', () => {
 
     applies({ ...defaults, on: ['push'] }, 'push', 'one', true)
     applies({ ...defaults, on: ['pull_request'] }, 'pull_request', 'one', true)
+    applies({ ...defaults, on: ['manual'] }, 'manual', 'one', true)
 
     applies({ ...defaults, on: ['push'] }, 'pull_request', 'one', false)
     applies({ ...defaults, on: ['pull_request'] }, 'push', 'one', false)
+    applies({ ...defaults, on: ['manual'] }, 'push', 'one', false)
   })
 
   test('validates object trigger', () => {
@@ -54,7 +64,8 @@ describe('config', () => {
 
     valid({ ...defaults, on: { push: null } })
     valid({ ...defaults, on: { pull_request: null } })
-    valid({ ...defaults, on: { push: null, pull_request: null } })
+    valid({ ...defaults, on: { manual: null } })
+    valid({ ...defaults, on: { push: null, pull_request: null, manual: null } })
 
     invalid({ ...defaults, on: {} })
     invalid({ ...defaults, on: { other: {} } })
@@ -66,15 +77,19 @@ describe('config', () => {
 
     applies({ ...defaults, on: { push: {} } }, 'push', 'one', true)
     applies({ ...defaults, on: { pull_request: {} } }, 'pull_request', 'one', true)
+    applies({ ...defaults, on: { manual: {} } }, 'manual', 'one', true)
 
     applies({ ...defaults, on: { push: {} } }, 'pull_request', 'one', false)
     applies({ ...defaults, on: { pull_request: {} } }, 'push', 'one', false)
+    applies({ ...defaults, on: { manual: {} } }, 'push', 'one', false)
 
     applies({ ...defaults, on: { push: null } }, 'push', 'one', true)
     applies({ ...defaults, on: { pull_request: null } }, 'pull_request', 'one', true)
+    applies({ ...defaults, on: { manual: null } }, 'manual', 'one', true)
 
     applies({ ...defaults, on: { push: null } }, 'pull_request', 'one', false)
     applies({ ...defaults, on: { pull_request: null } }, 'push', 'one', false)
+    applies({ ...defaults, on: { manual: null } }, 'push', 'one', false)
   })
 
   test('validates object trigger branches', () => {
@@ -82,10 +97,20 @@ describe('config', () => {
     valid({ ...defaults, on: { push: { branches: ['one', 'two'] } } })
     valid({ ...defaults, on: { pull_request: { branches: ['one'] } } })
     valid({ ...defaults, on: { pull_request: { branches: ['one', 'two'] } } })
-    valid({ ...defaults, on: { push: { branches: ['one'] }, pull_request: { branches: ['two'] } } })
+    valid({ ...defaults, on: { manual: { branches: ['one'] } } })
+    valid({ ...defaults, on: { manual: { branches: ['one', 'two'] } } })
+    valid({
+      ...defaults,
+      on: {
+        push: { branches: ['one'] },
+        pull_request: { branches: ['two'] },
+        manual: { branches: ['three'] },
+      },
+    })
 
     invalid({ ...defaults, on: { push: { branches: [] } } })
     invalid({ ...defaults, on: { pull_request: { branches: [] } } })
+    invalid({ ...defaults, on: { manual: { branches: [] } } })
 
     applies({ ...defaults, on: { push: { branches: ['one'] } } }, 'push', 'one', true)
     applies({ ...defaults, on: { push: { branches: ['one', 'two'] } } }, 'push', 'one', true)
@@ -101,6 +126,8 @@ describe('config', () => {
       'one',
       true
     )
+    applies({ ...defaults, on: { manual: { branches: ['one'] } } }, 'manual', 'one', true)
+    applies({ ...defaults, on: { manual: { branches: ['one', 'two'] } } }, 'manual', 'one', true)
 
     applies({ ...defaults, on: { push: { branches: ['one'] } } }, 'push', 'two', false)
     applies(
@@ -109,5 +136,6 @@ describe('config', () => {
       'two',
       false
     )
+    applies({ ...defaults, on: { manual: { branches: ['one'] } } }, 'manual', 'two', false)
   })
 })
