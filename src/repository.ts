@@ -158,11 +158,29 @@ export class Repository {
       await api.checks.createSuite({ ...this.params(), head_sha: sha })
     })
 
+    // Check if a deployment workflow exists, otherwise the status cannot be
+    // tracked.
+    const exists = await workflow.exists(this, sha)
+
     // Load deployment configuration.
     const list = await config.list(this, sha, '.github/deployments')
 
     // Iterate over each of the deployment configuration entries.
     for (const [env, [err, cfg]] of util.entries(list)) {
+      // Handle missing deployment workflow.
+      if (!exists) {
+        // Create the check suite if it does not exist.
+        await once()
+
+        // Create the check run for the deployment environment.
+        const run = await check.create(this, sha, env)
+
+        // Set the status to missing.
+        await status.missing(this, env, run)
+
+        continue
+      }
+
       // Handle error case.
       if (err) {
         // Create the check suite if it does not exist.

@@ -3,6 +3,29 @@ import { Deployment } from './deployment'
 import { Repository } from './repository'
 
 /**
+ * Sets the deployment check status to missing.
+ *
+ * @param ctx - The repository context.
+ * @param env - The deployment environment identifier.
+ * @param run - The associated check run.
+ */
+export async function missing(ctx: Repository, env: string, run: CheckRun): Promise<void> {
+  const api = await ctx.api()
+
+  // Update the status of the check run.
+  await api.checks.update({
+    ...ctx.params(),
+    check_run_id: run.id,
+    status: 'completed',
+    conclusion: 'failure',
+    output: {
+      title: 'Missing workflow',
+      summary: `No deployment workflow found for the ${env} environment.`,
+    },
+  })
+}
+
+/**
  * Sets the deployment check status to invalid.
  *
  * @param ctx - The repository context.
