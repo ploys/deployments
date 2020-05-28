@@ -4,13 +4,17 @@ url: https://github.com/ploys/deployments
 public: false
 
 default_events:
+- check_run
+- check_suite
 - installation
 - installation_repositories
 - pull_request
 - push
 
 default_permissions:
+  actions: read
+  deployments: write
   checks: write
-  contents: read
+  contents: write
   metadata: read
   pull_requests: read

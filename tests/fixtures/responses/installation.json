@@ -11,12 +11,16 @@
   "repository_selection": "selected",
   "target_type": "User",
   "permissions": {
+    "actions": "ready",
+    "deployments": "write",
     "checks": "write",
-    "contents": "read",
+    "contents": "write",
     "metadata": "read",
     "pull_requests": "read"
   },
   "events": [
+    "check_run",
+    "check_suite",
     "installation",
     "installation_repositories",
     "pull_request",

@@ -2,9 +2,12 @@ import type { Types } from '@octokit/auth-app'
 
 import { Octokit } from '@octokit/rest'
 
+import * as check from './check'
 import * as config from './config'
 import * as deployment from './deployment'
+import * as status from './status'
 import * as util from './util'
+import * as workflow from './workflow'
 
 import { TriggerName } from './config'
 import { Application } from './application'
@@ -159,17 +162,135 @@ export class Repository {
     const list = await config.list(this, sha, '.github/deployments')
 
     // Iterate over each of the deployment configuration entries.
-    for (const [id, [err, cfg]] of util.entries(list)) {
-      // Create the invalid status on configuration error.
+    for (const [env, [err, cfg]] of util.entries(list)) {
+      // Handle error case.
       if (err) {
+        // Create the check suite if it does not exist.
         await once()
-        await deployment.invalid(this, sha, id, err.message)
+
+        // Create the check run for the deployment environment.
+        const run = await check.create(this, sha, env)
+
+        // Set the status to invalid.
+        await status.invalid(this, env, run, err.message)
       }
 
-      // Create the ready status if the configuration applies.
+      // Check if the configuration is applicable.
       if (cfg && config.applies(cfg, trigger, branch)) {
+        // Create the check suite if it does not exist.
         await once()
-        await deployment.ready(this, sha, id)
+
+        // Create the check run for the deployment environment.
+        const run = await check.create(this, sha, env)
+
+        // Set the status to ready.
+        await status.ready(this, env, run)
+
+        // Get the deployment reference.
+        const ref = deployment.reference(env)
+
+        // Create the deployment reference branch. This makes it possible to
+        // distinguish between deployment environments when multiple deployment
+        // configurations are provided. Otherwise a GitHub Actions workflow run
+        // would have no association to the deployment that triggered it.
+        try {
+          // Attempt to update an existing deployment reference branch.
+          await api.git.updateRef({ ...this.params(), sha, ref: `heads/${ref}`, force: true })
+        } catch {
+          // Alternatively attempt to create a new deployment reference branch.
+          await api.git.createRef({ ...this.params(), sha, ref: `refs/heads/${ref}` })
+        }
+
+        // Create the deployment.
+        const dep = await deployment.create(this, env, run.id)
+
+        // Set the status to queued.
+        await status.queued(this, env, run, dep)
+      }
+    }
+  }
+
+  /**
+   * Marks a deployment as started.
+   *
+   * @param sha - The commit SHA.
+   * @param env - The deployment environment identifier.
+   * @param suite - The GitHub Actions check suite identifier.
+   */
+  async started(sha: string, env: string, suite: number): Promise<void> {
+    // Get the latest deployment workflow run.
+    const run = await workflow.get(this, sha, env)
+
+    // Ensure that the run belongs to the correct check suite. This could also
+    // be done by mapping a workflow job id to a check run id but this would
+    // require additional requests.
+    if (!run.check_suite_url.includes(suite.toString())) {
+      throw new Error(`Invalid workflow run for ${env} on ${suite} at ${sha}`)
+    }
+
+    // Ensure that the run is not marked as completed. This can happen on short
+    // workflows when webhook payloads are delivered out of order.
+    if (run.status === 'completed') {
+      return
+    }
+
+    // Get the latest deployment for the commit.
+    const dep = await deployment.get(this, sha, env)
+
+    // Get the associated check run.
+    const chk = await check.get(this, dep.payload.check_run_id)
+
+    // Ensure that the check run status is queued. Otherwise another check run
+    // may have already updated the status. This will be the case for workflows
+    // that use multiple jobs as it is not possible to respond to check suite
+    // creation events for GitHub Actions.
+    if (chk.status !== 'queued') {
+      return
+    }
+
+    // Set the status to started.
+    await status.started(this, env, chk, dep)
+  }
+
+  /**
+   * Marks a deployment as completed.
+   *
+   * @param sha - The commit SHA.
+   * @param env - The deployment environment identifier.
+   * @param suite - The GitHub Actions check suite identifier.
+   */
+  async completed(sha: string, env: string, suite: number): Promise<void> {
+    // Get the latest deployment workflow run.
+    const run = await workflow.get(this, sha, env)
+
+    // Ensure that the run belongs to the correct check suite. This could also
+    // be done by mapping a workflow job id to a check run id but this would
+    // require additional requests.
+    if (!run.check_suite_url.includes(suite.toString())) {
+      throw new Error(`Invalid workflow run for ${env} on ${suite} at ${sha}`)
+    }
+
+    // Ensure that the run is not marked as completed.
+    if (run.status !== 'completed') {
+      return
+    }
+
+    // Get the latest deployment for the commit.
+    const dep = await deployment.get(this, sha, env)
+
+    // Get the associated check run.
+    const chk = await check.get(this, dep.payload.check_run_id)
+
+    // Handle the workflow run conclusion.
+    switch (run.conclusion) {
+      case 'success': {
+        await status.success(this, env, chk, dep)
+        break
+      }
+
+      case 'failure': {
+        await status.failure(this, env, chk, dep)
+        break
       }
     }
   }

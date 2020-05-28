@@ -2,8 +2,10 @@
   "token": "test",
   "expires_at": "2025-05-25T20:00:00Z",
   "permissions": {
+    "actions": "ready",
+    "deployments": "write",
     "checks": "write",
-    "contents": "read",
+    "contents": "write",
     "metadata": "read",
     "pull_requests": "read"
   },
