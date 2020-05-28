@@ -1,5 +1,8 @@
 import type { RestEndpointMethodTypes } from '@octokit/rest'
 
+import to from 'await-to-js'
+import yaml from 'js-yaml'
+
 import * as deployment from './deployment'
 
 import { Repository } from './repository'
@@ -55,4 +58,74 @@ export async function get(ctx: Repository, sha: string, env: string): Promise<Wo
 
   // Take the latest workflow run.
   return runs[0]
+}
+
+/**
+ * Gets the contents of deployment workflow files.
+ *
+ * @param ctx - The repository context.
+ * @param sha - The commit SHA.
+ *
+ * @returns The promised list of deployment workflow file contents.
+ */
+export async function files(ctx: Repository, sha: string): Promise<any[]> {
+  const api = await ctx.api()
+
+  // Query the repository workflow files.
+  const [, res] = await to(
+    api.repos.getContents({
+      ...ctx.params(),
+      ref: sha,
+      path: '.github/workflows',
+    })
+  )
+
+  const items: any[] = []
+
+  // Check if the response is a directory.
+  if (res && Array.isArray(res.data)) {
+    // Iterate over files in the directory contents.
+    for (const item of res.data) {
+      try {
+        // Ensure that the file has the correct extension.
+        if (item.type === 'file' && (item.name.endsWith('.yml') || item.name.endsWith('.yaml'))) {
+          // Load the file contents.
+          const file = await api.repos.getContents({ ...ctx.params(), ref: sha, path: item.path })
+
+          // Convert the file to YAML.
+          const data = yaml.safeLoad(Buffer.from(file.data.content, 'base64').toString())
+
+          // Check if the workflow is for a deployment.
+          if (data && data.on) {
+            if (data.on === 'deployment') {
+              items.push(data)
+            } else if (Array.isArray(data.on) && data.on.includes('deployment')) {
+              items.push(data)
+            } else if (typeof data.on === 'object' && data.on['deployment'] !== undefined) {
+              items.push(data)
+            }
+          }
+        }
+      } catch {
+        continue
+      }
+    }
+  }
+
+  return items
+}
+
+/**
+ * Checks if a deployment workflow exists.
+ *
+ * @param ctx - The repository context.
+ * @param sha - The commit SHA.
+ *
+ * @returns The promised boolean status.
+ */
+export async function exists(ctx: Repository, sha: string): Promise<boolean> {
+  // List the deployment workflows.
+  const items = await files(ctx, sha)
+
+  return items.length > 0
 }

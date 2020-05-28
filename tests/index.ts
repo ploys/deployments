@@ -68,6 +68,30 @@ describe('application', () => {
     nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
 
     nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'deploy.yml',
+          path: '.github/workflows/deploy.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows%2Fdeploy.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'deploy.yml',
+        path: '.github/workflows/deploy.yml',
+        encoding: 'base64',
+        content: encode({
+          on: 'deployment',
+        }),
+      })
+
+    nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fdeployments')
       .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
       .reply(200, [
@@ -119,6 +143,187 @@ describe('application', () => {
         expect(body).toMatchObject({
           status: 'completed',
           conclusion: 'failure',
+          output: {
+            title: 'Invalid',
+            summary: 'Invalid deployment configuration for the invalid environment.',
+          },
+        })
+        done()
+        return true
+      })
+      .reply(200)
+
+    await app.webhooks().receive({ id: '1', name: 'push', payload: push })
+  })
+
+  test('creates a check run for missing deployment workflow on push', async done => {
+    nock('https://api.github.com')
+      .persist()
+      .get('/repos/ploys/tests/installation')
+      .reply(200, installation)
+
+    nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
+    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows')
+      .query(true)
+      .reply(200, [])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fdeployments')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'staging.yml',
+          path: '.github/deployments/staging.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fdeployments%2Fstaging.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'staging.yml',
+        path: '.github/deployments/staging.yml',
+        encoding: 'base64',
+        content: encode({
+          id: 'staging',
+          name: 'staging',
+          description: 'The staging deployment configuration',
+          on: 'push',
+        }),
+      })
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/commits/da4b9237bacccdf19c0760cab7aec4a8359010b0/check-suites')
+      .query({ app_id: 1 })
+      .reply(200, { total_count: 0, check_suites: [] })
+
+    nock('https://api.github.com').post('/repos/ploys/tests/check-suites').reply(200)
+
+    nock('https://api.github.com')
+      .post('/repos/ploys/tests/check-runs', body => {
+        expect(body).toMatchObject({
+          name: 'deployments/staging',
+          external_id: 'staging',
+          status: 'queued',
+        })
+        return true
+      })
+      .reply(201, {
+        id: 1,
+      })
+
+    nock('https://api.github.com')
+      .patch('/repos/ploys/tests/check-runs/1', body => {
+        expect(body).toMatchObject({
+          status: 'completed',
+          conclusion: 'failure',
+          output: {
+            title: 'Missing workflow',
+            summary: 'No deployment workflow found for the staging environment.',
+          },
+        })
+        done()
+        return true
+      })
+      .reply(200)
+
+    await app.webhooks().receive({ id: '1', name: 'push', payload: push })
+  })
+
+  test('creates a check run for push workflow on push', async done => {
+    nock('https://api.github.com')
+      .persist()
+      .get('/repos/ploys/tests/installation')
+      .reply(200, installation)
+
+    nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
+    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'deploy.yml',
+          path: '.github/workflows/deploy.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows%2Fdeploy.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'deploy.yml',
+        path: '.github/workflows/deploy.yml',
+        encoding: 'base64',
+        content: encode({
+          on: 'push',
+        }),
+      })
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fdeployments')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'staging.yml',
+          path: '.github/deployments/staging.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fdeployments%2Fstaging.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'staging.yml',
+        path: '.github/deployments/staging.yml',
+        encoding: 'base64',
+        content: encode({
+          id: 'staging',
+          name: 'staging',
+          description: 'The staging deployment configuration',
+          on: 'push',
+        }),
+      })
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/commits/da4b9237bacccdf19c0760cab7aec4a8359010b0/check-suites')
+      .query({ app_id: 1 })
+      .reply(200, { total_count: 0, check_suites: [] })
+
+    nock('https://api.github.com').post('/repos/ploys/tests/check-suites').reply(200)
+
+    nock('https://api.github.com')
+      .post('/repos/ploys/tests/check-runs', body => {
+        expect(body).toMatchObject({
+          name: 'deployments/staging',
+          external_id: 'staging',
+          status: 'queued',
+        })
+        return true
+      })
+      .reply(201, {
+        id: 1,
+      })
+
+    nock('https://api.github.com')
+      .patch('/repos/ploys/tests/check-runs/1', body => {
+        expect(body).toMatchObject({
+          status: 'completed',
+          conclusion: 'failure',
+          output: {
+            title: 'Missing workflow',
+            summary: 'No deployment workflow found for the staging environment.',
+          },
         })
         done()
         return true
@@ -136,6 +341,30 @@ describe('application', () => {
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
     nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'deploy.yml',
+          path: '.github/workflows/deploy.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows%2Fdeploy.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'deploy.yml',
+        path: '.github/workflows/deploy.yml',
+        encoding: 'base64',
+        content: encode({
+          on: 'deployment',
+        }),
+      })
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fdeployments')
@@ -249,6 +478,30 @@ describe('application', () => {
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
     nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'deploy.yml',
+          path: '.github/workflows/deploy.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows%2Fdeploy.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'deploy.yml',
+        path: '.github/workflows/deploy.yml',
+        encoding: 'base64',
+        content: encode({
+          on: 'deployment',
+        }),
+      })
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fdeployments')
@@ -451,6 +704,30 @@ describe('application', () => {
     nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
 
     nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'deploy.yml',
+          path: '.github/workflows/deploy.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows%2Fdeploy.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'deploy.yml',
+        path: '.github/workflows/deploy.yml',
+        encoding: 'base64',
+        content: encode({
+          on: 'deployment',
+        }),
+      })
+
+    nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fdeployments')
       .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
       .reply(200, [
@@ -566,6 +843,30 @@ describe('application', () => {
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
     nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, [
+        {
+          type: 'file',
+          name: 'deploy.yml',
+          path: '.github/workflows/deploy.yml',
+        },
+      ])
+
+    nock('https://api.github.com')
+      .get('/repos/ploys/tests/contents/.github%2Fworkflows%2Fdeploy.yml')
+      .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
+      .reply(200, {
+        type: 'file',
+        name: 'deploy.yml',
+        path: '.github/workflows/deploy.yml',
+        encoding: 'base64',
+        content: encode({
+          on: 'deployment',
+        }),
+      })
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fdeployments')
