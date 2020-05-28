@@ -13,6 +13,7 @@ export type Config = {
   id: string
   name: string
   description: string
+  automatic: boolean
   on: Triggers
 }
 
@@ -58,6 +59,7 @@ export function schema(): Joi.ObjectSchema<any> {
     id: Joi.string().pattern(new RegExp('^[a-zA-Z0-9-]{2,30}$')).min(2).max(30).required(),
     name: Joi.string().alphanum().min(2).max(30).required(),
     description: Joi.string().max(140).required(),
+    automatic: Joi.boolean().required(),
     on: Joi.alternatives(
       Joi.string().valid('push', 'pull_request').required(),
       Joi.array().items(Joi.string().valid('push', 'pull_request').required()).required(),
@@ -92,6 +94,7 @@ export function defaults(path: string): Partial<Config> {
   return {
     id,
     description: `The ${id} environment.`,
+    automatic: false,
   }
 }
 

@@ -15,7 +15,7 @@ function applies(cfg: config.Config, trigger: config.TriggerName, branch: string
 }
 
 describe('config', () => {
-  const defaults = { id: 'test', name: 'test', description: 'test' }
+  const defaults = { id: 'test', name: 'test', description: 'test', automatic: true }
 
   test('validates string trigger', () => {
     valid({ ...defaults, on: 'push' })

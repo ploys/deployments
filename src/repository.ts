@@ -201,31 +201,71 @@ export class Repository {
         // Create the check run for the deployment environment.
         const run = await check.create(this, sha, env)
 
-        // Set the status to ready.
-        await status.ready(this, env, run)
+        // Check is automatic deployment is enabled.
+        if (cfg.automatic) {
+          // Get the deployment reference.
+          const ref = deployment.reference(env)
 
-        // Get the deployment reference.
-        const ref = deployment.reference(env)
+          // Create the deployment reference branch. This makes it possible to
+          // distinguish between deployment environments when multiple
+          // deployment configurations are provided. Otherwise a GitHub Actions
+          // workflow run would have no association to the deployment that
+          // triggered it.
+          try {
+            // Attempt to update an existing deployment reference branch.
+            await api.git.updateRef({ ...this.params(), sha, ref: `heads/${ref}`, force: true })
+          } catch {
+            // Alternatively attempt to create a new deployment reference branch.
+            await api.git.createRef({ ...this.params(), sha, ref: `refs/heads/${ref}` })
+          }
 
-        // Create the deployment reference branch. This makes it possible to
-        // distinguish between deployment environments when multiple deployment
-        // configurations are provided. Otherwise a GitHub Actions workflow run
-        // would have no association to the deployment that triggered it.
-        try {
-          // Attempt to update an existing deployment reference branch.
-          await api.git.updateRef({ ...this.params(), sha, ref: `heads/${ref}`, force: true })
-        } catch {
-          // Alternatively attempt to create a new deployment reference branch.
-          await api.git.createRef({ ...this.params(), sha, ref: `refs/heads/${ref}` })
+          // Create the deployment.
+          const dep = await deployment.create(this, env, run.id)
+
+          // Set the status to queued.
+          await status.queued(this, env, run, dep)
+        } else {
+          // Set the status to ready.
+          await status.ready(this, env, run)
         }
-
-        // Create the deployment.
-        const dep = await deployment.create(this, env, run.id)
-
-        // Set the status to queued.
-        await status.queued(this, env, run, dep)
       }
     }
+  }
+
+  /**
+   * Requests a deployment.
+   *
+   * @param sha - The commit SHA.
+   * @param env - The deployment environment identifier.
+   * @param run - The check run identifier.
+   */
+  async request(sha: string, env: string, run: number): Promise<void> {
+    const api = await this.api()
+
+    // Get the deployment reference.
+    const ref = deployment.reference(env)
+
+    // Create the deployment reference branch. This makes it possible to
+    // distinguish between deployment environments when multiple
+    // deployment configurations are provided. Otherwise a GitHub Actions
+    // workflow run would have no association to the deployment that
+    // triggered it.
+    try {
+      // Attempt to update an existing deployment reference branch.
+      await api.git.updateRef({ ...this.params(), sha, ref: `heads/${ref}`, force: true })
+    } catch {
+      // Alternatively attempt to create a new deployment reference branch.
+      await api.git.createRef({ ...this.params(), sha, ref: `refs/heads/${ref}` })
+    }
+
+    // Get the check run.
+    const chk = await check.get(this, run)
+
+    // Create the deployment.
+    const dep = await deployment.create(this, env, run)
+
+    // Set the status to queued.
+    await status.queued(this, env, chk, dep)
   }
 
   /**
