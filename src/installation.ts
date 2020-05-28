@@ -121,7 +121,10 @@ export class Installation {
   async api(): Promise<Octokit> {
     const auth = await this.auth()
 
-    return new Octokit({ auth: auth.token })
+    return new Octokit({
+      auth: auth.token,
+      previews: ['ant-man-preview', 'antiope-preview', 'flash-preview'],
+    })
   }
 
   /**

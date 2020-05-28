@@ -72,6 +72,8 @@ export class Application {
     hooks.on('push', this.onPush.bind(this))
     hooks.on('pull_request.opened', this.onPullRequest.bind(this))
     hooks.on('pull_request.synchronize', this.onPullRequest.bind(this))
+    hooks.on('check_run.created', this.onCheckRunCreated.bind(this))
+    hooks.on('check_suite.completed', this.onCheckSuiteCompleted.bind(this))
     hooks.on('error', error => console.error(error))
   }
 
@@ -238,5 +240,61 @@ export class Application {
     const repo = await inst.repository(event.payload.repository.id)
 
     await repo.deploy(sha, ref, 'pull_request')
+  }
+
+  /**
+   * Handles the *check run created* event.
+   *
+   * @param event - The event object.
+   */
+  private async onCheckRunCreated(
+    event: Webhooks.WebhookEvent<Webhooks.WebhookPayloadCheckRun>
+  ): Promise<void> {
+    // Ensure check run is for GitHub Actions.
+    if ((event.payload.check_run.app as any).slug !== 'github-actions') {
+      return
+    }
+
+    // Ensure check suite targets deployments branch.
+    if (!event.payload.check_run.check_suite.head_branch.startsWith('deployments/')) {
+      return
+    }
+
+    const sha = event.payload.check_run.head_sha
+    const env = event.payload.check_run.check_suite.head_branch.split('/', 2).pop() as string
+    const suite = event.payload.check_run.check_suite.id
+
+    const inst = await this.installation(event)
+    const repo = await inst.repository(event.payload.repository.id)
+
+    await repo.started(sha, env, suite)
+  }
+
+  /**
+   * Handles the *check suite completed* event.
+   *
+   * @param event - The event object.
+   */
+  private async onCheckSuiteCompleted(
+    event: Webhooks.WebhookEvent<Webhooks.WebhookPayloadCheckSuite>
+  ): Promise<void> {
+    // Ensure check suite is for GitHub Actions.
+    if ((event.payload.check_suite.app as any).slug !== 'github-actions') {
+      return
+    }
+
+    // Ensure check suite targets deployments branch.
+    if (!event.payload.check_suite.head_branch.startsWith('deployments/')) {
+      return
+    }
+
+    const sha = event.payload.check_suite.head_sha
+    const env = event.payload.check_suite.head_branch.split('/', 2).pop() as string
+    const suite = event.payload.check_suite.id
+
+    const inst = await this.installation(event)
+    const repo = await inst.repository(event.payload.repository.id)
+
+    await repo.completed(sha, env, suite)
   }
 }

@@ -1,0 +1,66 @@
+{
+  "action": "created",
+  "check_run": {
+    "id": 1,
+    "head_sha": "da4b9237bacccdf19c0760cab7aec4a8359010b0",
+    "external_id": "90e34861-bca5-4e75-95e2-b4e5d20d101e",
+    "status": "queued",
+    "conclusion": null,
+    "started_at": "2020-05-25T20:00:00Z",
+    "completed_at": null,
+    "output": {
+      "title": null,
+      "summary": null,
+      "text": null
+    },
+    "name": "deploy",
+    "check_suite": {
+      "id": 1,
+      "head_branch": "deployments/staging",
+      "head_sha": "da4b9237bacccdf19c0760cab7aec4a8359010b0",
+      "status": "queued",
+      "conclusion": null,
+      "before": "356a192b7913b04c54574d18c28d46e6395428ab",
+      "after": "da4b9237bacccdf19c0760cab7aec4a8359010b0",
+      "pull_requests": [],
+      "app": {
+        "id": 2,
+        "name": "GitHub Actions",
+        "slug": "github-actions",
+        "owner": {
+          "id": 2,
+          "type": "User",
+          "login": "github-actions"
+        }
+      }
+    },
+    "app": {
+      "id": 2,
+      "name": "GitHub Actions",
+      "slug": "github-actions",
+      "owner": {
+        "id": 2,
+        "type": "User",
+        "login": "github-actions"
+      }
+    },
+    "pull_requests": []
+  },
+  "repository": {
+    "id": 1,
+    "name": "tests",
+    "full_name": "ploys/tests",
+    "private": false,
+    "owner": {
+      "id": 1,
+      "type": "User",
+      "login": "ploys"
+    },
+    "default_branch": "master"
+  },
+  "sender": {
+    "id": 2,
+    "type": "User",
+    "login": "github-actions"
+  }
+}
