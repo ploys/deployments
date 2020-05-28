@@ -115,7 +115,6 @@ describe('application', () => {
           id: 'my&invalid&id',
           name: 'invalid',
           description: 'The invalid deployment configuration',
-          automatic: true,
           on: 'push',
         }),
       })
@@ -195,7 +194,6 @@ describe('application', () => {
           id: 'staging',
           name: 'staging',
           description: 'The staging deployment configuration',
-          automatic: true,
           on: 'push',
         }),
       })
@@ -392,7 +390,6 @@ describe('application', () => {
           id: 'valid',
           name: 'valid',
           description: 'The valid deployment configuration',
-          automatic: true,
           on: 'push',
         }),
       })
@@ -525,7 +522,6 @@ describe('application', () => {
           id: 'staging',
           name: 'staging',
           description: 'The staging deployment configuration',
-          automatic: true,
           on: 'push',
         }),
       })
@@ -542,7 +538,6 @@ describe('application', () => {
           id: 'production',
           name: 'production',
           description: 'The production deployment configuration',
-          automatic: true,
           on: 'push',
         }),
       })
@@ -726,7 +721,6 @@ describe('application', () => {
           id: 'staging',
           name: 'staging',
           description: 'The staging deployment configuration',
-          automatic: true,
           on: {
             pull_request: {
               branches: ['master'],
@@ -858,7 +852,6 @@ describe('application', () => {
           id: 'staging',
           name: 'staging',
           description: 'The staging deployment configuration',
-          automatic: true,
           on: 'push',
         }),
       })
@@ -1112,8 +1105,7 @@ describe('application', () => {
           id: 'staging',
           name: 'staging',
           description: 'The staging deployment configuration',
-          automatic: false,
-          on: 'push',
+          on: 'manual',
         }),
       })
 

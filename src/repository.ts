@@ -193,16 +193,16 @@ export class Repository {
         await status.invalid(this, env, run, err.message)
       }
 
-      // Check if the configuration is applicable.
-      if (cfg && config.applies(cfg, trigger, branch)) {
-        // Create the check suite if it does not exist.
-        await once()
+      // Handle valid configuration.
+      if (cfg) {
+        // Check if the configuration is applicable.
+        if (config.applies(cfg, trigger, branch)) {
+          // Create the check suite if it does not exist.
+          await once()
 
-        // Create the check run for the deployment environment.
-        const run = await check.create(this, sha, env)
+          // Create the check run for the deployment environment.
+          const run = await check.create(this, sha, env)
 
-        // Check is automatic deployment is enabled.
-        if (cfg.automatic) {
           // Get the deployment reference.
           const ref = deployment.reference(env)
 
@@ -224,9 +224,24 @@ export class Repository {
 
           // Set the status to queued.
           await status.queued(this, env, run, dep)
-        } else {
+
+          continue
+        }
+
+        // Check if manual deployment is enabled. This is limited to the push
+        // event as that is when the ready status should be created. However it
+        // should not be possible for a pull request event to get this far.
+        if (config.applies(cfg, 'manual', branch) && trigger === 'push') {
+          // Create the check suite if it does not exist.
+          await once()
+
+          // Create the check run for the deployment environment.
+          const run = await check.create(this, sha, env)
+
           // Set the status to ready.
           await status.ready(this, env, run)
+
+          continue
         }
       }
     }
