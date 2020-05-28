@@ -35,7 +35,7 @@ export async function create(ctx: Repository, sha: string, env: string): Promise
   // Create the check run.
   const res = await api.checks.create({
     ...ctx.params(),
-    name: `deployments/${env}`,
+    name: env,
     head_sha: sha,
     external_id: env,
     status: 'queued',
