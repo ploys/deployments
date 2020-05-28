@@ -128,7 +128,7 @@ describe('application', () => {
     nock('https://api.github.com')
       .post('/repos/ploys/tests/check-runs', body => {
         expect(body).toMatchObject({
-          name: 'deployments/invalid',
+          name: 'invalid',
           external_id: 'invalid',
           status: 'queued',
         })
@@ -207,7 +207,7 @@ describe('application', () => {
     nock('https://api.github.com')
       .post('/repos/ploys/tests/check-runs', body => {
         expect(body).toMatchObject({
-          name: 'deployments/staging',
+          name: 'staging',
           external_id: 'staging',
           status: 'queued',
         })
@@ -305,7 +305,7 @@ describe('application', () => {
     nock('https://api.github.com')
       .post('/repos/ploys/tests/check-runs', body => {
         expect(body).toMatchObject({
-          name: 'deployments/staging',
+          name: 'staging',
           external_id: 'staging',
           status: 'queued',
         })
@@ -403,7 +403,7 @@ describe('application', () => {
     nock('https://api.github.com')
       .post('/repos/ploys/tests/check-runs', body => {
         expect(body).toMatchObject({
-          name: 'deployments/valid',
+          name: 'valid',
           external_id: 'valid',
           status: 'queued',
         })
@@ -561,7 +561,7 @@ describe('application', () => {
     nock('https://api.github.com')
       .post('/repos/ploys/tests/check-runs', body => {
         expect(body).toMatchObject({
-          name: 'deployments/staging',
+          name: 'staging',
           external_id: 'staging',
           status: 'queued',
         })
@@ -627,7 +627,7 @@ describe('application', () => {
     nock('https://api.github.com')
       .post('/repos/ploys/tests/check-runs', body => {
         expect(body).toMatchObject({
-          name: 'deployments/production',
+          name: 'production',
           external_id: 'production',
           status: 'queued',
         })
@@ -768,7 +768,7 @@ describe('application', () => {
     nock('https://api.github.com')
       .post('/repos/ploys/tests/check-runs', body => {
         expect(body).toMatchObject({
-          name: 'deployments/staging',
+          name: 'staging',
           external_id: 'staging',
           status: 'queued',
         })
@@ -905,7 +905,7 @@ describe('application', () => {
     nock('https://api.github.com')
       .post('/repos/ploys/tests/check-runs', body => {
         expect(body).toMatchObject({
-          name: 'deployments/staging',
+          name: 'staging',
           external_id: 'staging',
           status: 'queued',
         })
