@@ -19,8 +19,17 @@
   },
   "overrides": [
     {
-      "files": ["src/**/*.spec.ts", "src/**/*.test.ts", "tests/**/*.ts", "jest.config.js"],
-      "plugins": ["jest", "github", "eslint-plugin-tsdoc"],
+      "files": [
+        "jest.config.js",
+        "**/src/**/*.spec.ts",
+        "**/src/**/*.test.ts",
+        "**/tests/**/*.ts"
+      ],
+      "plugins": [
+        "jest",
+        "github",
+        "eslint-plugin-tsdoc"
+      ],
       "parserOptions": {
         "ecmaVersion": 9,
         "sourceType": "module",

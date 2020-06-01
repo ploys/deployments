@@ -1,0 +1,37 @@
+{
+  "name": "@ploys/deployments-core",
+  "version": "1.0.0",
+  "description": "Automated continuous deployment and delivery",
+  "author": "Daniel Balcomb <daniel.balcomb@gmail.com>",
+  "license": "ISC",
+  "private": true,
+  "repository": "https://github.com/ploys/deployments",
+  "homepage": "https://github.com/ploys/deployments#readme",
+  "bugs": "https://github.com/ploys/deployments/issues",
+  "keywords": [
+    "deployments"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@hapi/joi": "^17.1.1",
+    "@octokit/auth-app": "^2.4.5",
+    "@octokit/rest": "^17.9.2",
+    "@octokit/types": "^4.0.2",
+    "@octokit/webhooks": "^7.6.2",
+    "await-to-js": "^2.1.1",
+    "eventsource": "^1.0.7",
+    "js-yaml": "^3.14.0"
+  },
+  "devDependencies": {
+    "@types/eventsource": "^1.1.2",
+    "@types/hapi__joi": "^17.1.0",
+    "@types/jest": "^25.2.3",
+    "@types/js-yaml": "^3.12.4",
+    "@types/node": "^14.0.5",
+    "nock": "^12.0.3"
+  }
+}

@@ -1,4 +1,4 @@
-import { Application } from './application'
+import { Application } from '@ploys/deployments-core'
 
 function run(): void {
   if (!process.env.APP_ID) {
