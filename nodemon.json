@@ -1,7 +1,9 @@
 {
   "signal": "SIGINT",
-  "watch": ["lib"],
+  "watch": ["packages"],
   "delay": "3000",
   "verbose": false,
-  "exec": ["npm run start"]
+  "ext": "ts",
+  "ignore": ["**/*.spec.ts", "**/*.test.ts", "**/tests/**/*"],
+  "exec": "npx ts-node ./packages/cli/src/index.ts"
 }

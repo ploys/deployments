@@ -1,0 +1,16 @@
+{
+  "name": "@ploys/deployments-cli",
+  "version": "1.0.0",
+  "description": "Automated continuous deployment and delivery",
+  "author": "Daniel Balcomb <daniel.balcomb@gmail.com>",
+  "license": "ISC",
+  "private": true,
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@ploys/deployments-core": "1.0.0"
+  }
+}
