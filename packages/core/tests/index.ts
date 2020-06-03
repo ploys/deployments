@@ -6,7 +6,7 @@ import { safeDump } from 'js-yaml'
 import { Application } from '../src/application'
 
 import push from './fixtures/payloads/push.json'
-import pull_request from './fixtures/payloads/pull_request.opened.json'
+import pullRequest from './fixtures/payloads/pull_request.opened.json'
 import installationCreated from './fixtures/payloads/installation.created.json'
 import checkRun from './fixtures/payloads/check_run.created.json'
 import checkSuite from './fixtures/payloads/check_suite.completed.json'
@@ -14,7 +14,6 @@ import requestedAction from './fixtures/payloads/check_run.requested_action.json
 
 import installation from './fixtures/responses/installation.json'
 import tokens from './fixtures/responses/access_tokens.json'
-import commits from './fixtures/responses/commits.json'
 
 function encode(input: any): string {
   return Buffer.from(safeDump(input)).toString('base64')
@@ -66,7 +65,6 @@ describe('application', () => {
       .reply(200, installation)
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
-    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fworkflows')
@@ -164,7 +162,6 @@ describe('application', () => {
       .reply(200, installation)
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
-    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fworkflows')
@@ -243,7 +240,6 @@ describe('application', () => {
       .reply(200, installation)
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
-    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fworkflows')
@@ -341,7 +337,6 @@ describe('application', () => {
       .reply(200, installation)
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
-    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fworkflows')
@@ -468,7 +463,6 @@ describe('application', () => {
       .reply(200, installation)
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
-    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fworkflows')
@@ -672,7 +666,6 @@ describe('application', () => {
       .reply(200, installation)
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
-    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fworkflows')
@@ -793,7 +786,7 @@ describe('application', () => {
       })
       .reply(200)
 
-    await app.webhooks().receive({ id: '1', name: 'pull_request', payload: pull_request })
+    await app.webhooks().receive({ id: '1', name: 'pull_request', payload: pullRequest })
   })
 
   test('creates, updates and completes a deployment', async done => {
@@ -803,7 +796,6 @@ describe('application', () => {
       .reply(200, installation)
 
     nock('https://api.github.com').post('/app/installations/1/access_tokens').reply(200, tokens)
-    nock('https://api.github.com').get('/repos/ploys/tests/commits').reply(200, commits)
 
     nock('https://api.github.com')
       .get('/repos/ploys/tests/contents/.github%2Fworkflows')
