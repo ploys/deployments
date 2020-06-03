@@ -1,39 +1,43 @@
 {
-  "plugins": ["github", "eslint-plugin-tsdoc"],
-  "extends": ["plugin:github/recommended", "plugin:github/typescript"],
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaVersion": 9,
-    "sourceType": "module",
-    "project": "./tsconfig.json"
-  },
-  "rules": {
-    "no-console": "off",
-    "@typescript-eslint/no-explicit-any": "off",
-    "import/no-namespace": "off",
-    "tsdoc/syntax": "warn"
-  },
-  "env": {
-    "node": true,
-    "es6": true
-  },
+  "root": true,
   "overrides": [
     {
-      "files": [
-        "jest.config.js",
-        "**/src/**/*.spec.ts",
-        "**/src/**/*.test.ts",
-        "**/tests/**/*.ts"
-      ],
-      "plugins": [
-        "jest",
-        "github",
-        "eslint-plugin-tsdoc"
-      ],
+      "files": ["packages/*/src/**/*.ts"],
+      "excludedFiles": ["**/*.test.ts", "**/*.spec.ts"],
+      "plugins": ["github", "eslint-plugin-tsdoc"],
+      "extends": ["plugin:github/recommended", "plugin:github/typescript"],
+      "parser": "@typescript-eslint/parser",
       "parserOptions": {
         "ecmaVersion": 9,
         "sourceType": "module",
-        "project": "./tsconfig.tests.json"
+        "project": "./tsconfig.json"
+      },
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "import/no-namespace": "off",
+        "tsdoc/syntax": "warn"
+      },
+      "env": {
+        "node": true,
+        "es6": true
+      }
+    },
+    {
+      "files": ["packages/*/tests/**/*.ts", "packages/*/src/**/*.test.ts", "packages/*/src/**/*.spec.ts"],
+      "plugins": ["jest", "github", "eslint-plugin-tsdoc"],
+      "extends": ["plugin:github/recommended", "plugin:github/typescript"],
+      "parser": "@typescript-eslint/parser",
+      "parserOptions": {
+        "ecmaVersion": 9,
+        "sourceType": "module",
+        "project": "./tsconfig.json"
+      },
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "import/no-namespace": "off",
+        "tsdoc/syntax": "warn"
       },
       "env": {
         "node": true,
