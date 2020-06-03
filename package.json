@@ -2,12 +2,12 @@
   "name": "@ploys/deployments",
   "private": true,
   "workspaces": [
-    "packages/cli",
-    "packages/core"
+    "packages/*"
   ],
   "scripts": {
-    "build": "lerna run build",
-    "start": "lerna run build && node ./packages/cli/lib/index.js",
+    "build": "lerna run --parallel build",
+    "clean": "lerna run --parallel clean",
+    "start": "yarn run build && node ./packages/cli/lib/index.js",
     "start:dev": "nodemon",
     "lint": "eslint packages",
     "lint:fix": "eslint packages --fix",

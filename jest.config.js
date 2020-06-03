@@ -6,4 +6,7 @@ module.exports = {
   testEnvironment: 'node',
   testRegex: '(/tests/.*|(\\.|/)(test|spec))\\.ts$',
   moduleFileExtensions: ['ts', 'js'],
+  moduleNameMapper: {
+    "@ploys/deployments-(.*)": "<rootDir>/packages/$1/src/index.ts"
+  },
 }
