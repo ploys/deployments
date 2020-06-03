@@ -1,13 +1,17 @@
 import { basename, extname } from 'path'
 import { Octokit } from '@octokit/rest'
 import { Trigger, TriggerName, Triggers } from './trigger'
-import { schema } from './schema'
+import { schema as definition } from './schema'
 
 import to from 'await-to-js'
 import yaml from 'js-yaml'
 
 export { Trigger, TriggerName, Triggers } from './trigger'
-export { schema } from './schema'
+
+/**
+ * The generated schema.
+ */
+export const schema = definition()
 
 /**
  * The deployment configuration parameters.
@@ -142,7 +146,7 @@ export class Config {
 
     const obj = yaml.safeLoad(Buffer.from(res.data.content, 'base64').toString())
     const def = { ...this.defaults(params.path), ...obj }
-    const val = await schema().validateAsync(def)
+    const val = await schema.validateAsync(def)
 
     return new this(val)
   }

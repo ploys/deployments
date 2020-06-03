@@ -1,11 +1,11 @@
 import { schema, Config, ConfigData, TriggerName } from '../src'
 
 function valid(value: any) {
-  expect(schema().validate(value).error).toBeUndefined()
+  expect(schema.validate(value).error).toBeUndefined()
 }
 
 function invalid(value: any) {
-  expect(schema().validate(value).error).toBeDefined()
+  expect(schema.validate(value).error).toBeDefined()
 }
 
 function matches(cfg: ConfigData, trigger: TriggerName, branch: string, bool: boolean) {
