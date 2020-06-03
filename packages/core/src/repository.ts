@@ -1,15 +1,14 @@
 import type { Types } from '@octokit/auth-app'
 
 import { Octokit } from '@octokit/rest'
+import { Config, TriggerName } from '@ploys/deployments-config'
 
 import * as check from './check'
-import * as config from './config'
 import * as deployment from './deployment'
 import * as status from './status'
 import * as util from './util'
 import * as workflow from './workflow'
 
-import { TriggerName } from './config'
 import { Application } from './application'
 import { Installation } from './installation'
 
@@ -163,7 +162,7 @@ export class Repository {
     const exists = await workflow.exists(this, sha)
 
     // Load deployment configuration.
-    const list = await config.list(this, sha, '.github/deployments')
+    const list = await Config.list(api, { ...this.params(), ref: sha, path: '.github/deployments' })
 
     // Iterate over each of the deployment configuration entries.
     for (const [env, [err, cfg]] of util.entries(list)) {
@@ -196,7 +195,7 @@ export class Repository {
       // Handle valid configuration.
       if (cfg) {
         // Check if the configuration is applicable.
-        if (config.applies(cfg, trigger, branch)) {
+        if (cfg.matches(trigger, branch)) {
           // Create the check suite if it does not exist.
           await once()
 
@@ -231,7 +230,7 @@ export class Repository {
         // Check if manual deployment is enabled. This is limited to the push
         // event as that is when the ready status should be created. However it
         // should not be possible for a pull request event to get this far.
-        if (config.applies(cfg, 'manual', branch) && trigger === 'push') {
+        if (cfg.matches('manual', branch) && trigger === 'push') {
           // Create the check suite if it does not exist.
           await once()
 

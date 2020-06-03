@@ -8,8 +8,5 @@
     "incremental": true
   },
   "include": ["src"],
-  "exclude": ["lib", "tests", "node_modules", "**/*.test.ts", "**/*.spec.ts"],
-  "references": [
-    { "path": "../config/tsconfig.build.json", "prepend": false }
-  ]
+  "exclude": ["lib", "tests", "node_modules", "**/*.test.ts", "**/*.spec.ts"]
 }
