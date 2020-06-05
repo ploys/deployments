@@ -1392,7 +1392,7 @@
     deprecation "^2.0.0"
     once "^1.4.0"
 
-"@octokit/request@^5.2.0", "@octokit/request@^5.3.0", "@octokit/request@^5.4.0":
+"@octokit/request@^5.2.0", "@octokit/request@^5.3.0", "@octokit/request@^5.4.0", "@octokit/request@^5.4.4":
   version "5.4.4"
   resolved "https://registry.yarnpkg.com/@octokit/request/-/request-5.4.4.tgz#dc57e85e86284fa016d0c1a2701a70a10cec4ff2"
   integrity sha512-vqv1lz41c6VTxUvF9nM+a6U+vvP3vGk7drDpr0DVQg4zyqlOiKVrY17DLD6de5okj+YLHKcoqaUZTBtlNZ1BtQ==
@@ -1458,6 +1458,15 @@
   integrity sha512-zZkOWMqsQWhNsT+sCwJ3EBO8WOFkmyf5IxdRY3VqDd5xHPNIvjXOoeLmMgUV01rjo7hmKCiwdZffY96KAbCGOg==
   dependencies:
     debug "^4.0.0"
+
+"@ploys/harness@git+https://github.com/ploys/harness.git#28644d304111c161d933fa0fcaa85ef956213324":
+  version "1.0.0"
+  resolved "git+https://github.com/ploys/harness.git#28644d304111c161d933fa0fcaa85ef956213324"
+  dependencies:
+    "@octokit/request" "^5.4.4"
+    "@octokit/webhooks" "^7.6.2"
+    nock "^12.0.3"
+    uuid "^8.1.0"
 
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
@@ -8205,6 +8214,11 @@ uuid@^7.0.3:
   version "7.0.3"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-7.0.3.tgz#c5c9f2c8cf25dc0a372c4df1441c41f5bd0c680b"
   integrity sha512-DPSke0pXhTZgoF/d+WSt2QaKMCFSfx7QegxEWT+JOuHF5aWrKEn0G+ztjuJg/gG8/ItK+rbPCD/yNv8yyih6Cg==
+
+uuid@^8.1.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.1.0.tgz#6f1536eb43249f473abc6bd58ff983da1ca30d8d"
+  integrity sha512-CI18flHDznR0lq54xBycOVmphdCYnQLKn8abKn7PXUiKUGdEd+/l9LWNJmugXel4hXq7S+RMNl34ecyC9TntWg==
 
 v8-compile-cache@^2.0.3:
   version "2.1.1"
