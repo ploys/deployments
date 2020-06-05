@@ -1392,7 +1392,7 @@
     deprecation "^2.0.0"
     once "^1.4.0"
 
-"@octokit/request@^5.2.0", "@octokit/request@^5.3.0", "@octokit/request@^5.4.0", "@octokit/request@^5.4.4":
+"@octokit/request@^5.2.0", "@octokit/request@^5.3.0", "@octokit/request@^5.4.0":
   version "5.4.4"
   resolved "https://registry.yarnpkg.com/@octokit/request/-/request-5.4.4.tgz#dc57e85e86284fa016d0c1a2701a70a10cec4ff2"
   integrity sha512-vqv1lz41c6VTxUvF9nM+a6U+vvP3vGk7drDpr0DVQg4zyqlOiKVrY17DLD6de5okj+YLHKcoqaUZTBtlNZ1BtQ==
@@ -1459,12 +1459,11 @@
   dependencies:
     debug "^4.0.0"
 
-"@ploys/harness@git+https://github.com/ploys/harness.git#28644d304111c161d933fa0fcaa85ef956213324":
-  version "1.0.0"
-  resolved "git+https://github.com/ploys/harness.git#28644d304111c161d933fa0fcaa85ef956213324"
+"@ploys/harness@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@ploys/harness/-/harness-0.1.0.tgz#c943a6223e859e559c696764fa939a0ae21830bf"
+  integrity sha512-70d9dGwtm477OW+3hvhHNenIAHZnsskVTPuUHZlGxs/e4jnb6zjKV1KC7Hk0XgxbTZ+UVMkBBZyn0os67IRZNg==
   dependencies:
-    "@octokit/request" "^5.4.4"
-    "@octokit/webhooks" "^7.6.2"
     nock "^12.0.3"
     uuid "^8.1.0"
 
