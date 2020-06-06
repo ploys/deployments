@@ -202,20 +202,18 @@ export class Repository {
           // Create the check run for the deployment environment.
           const run = await check.create(this, sha, env)
 
-          // Get the deployment reference.
-          const ref = deployment.reference(env)
-
-          // Create the deployment reference branch. This makes it possible to
-          // distinguish between deployment environments when multiple
-          // deployment configurations are provided. Otherwise a GitHub Actions
-          // workflow run would have no association to the deployment that
-          // triggered it.
           try {
-            // Attempt to update an existing deployment reference branch.
-            await api.git.updateRef({ ...this.params(), sha, ref: `heads/${ref}`, force: true })
+            // Lock the deployment to the commit SHA. This prevents the
+            // deployment from being triggered on another commit.
+            await this.lock(api, env, sha)
           } catch {
-            // Alternatively attempt to create a new deployment reference branch.
-            await api.git.createRef({ ...this.params(), sha, ref: `refs/heads/${ref}` })
+            // Otherwise set the status to ready. Ideally this would create a
+            // status without any actions but this would prevent the deployment
+            // from being started at a later time. It would not be feasible to
+            // go back and re-enable the action once deployment is completed.
+            await status.ready(this, env, run)
+
+            continue
           }
 
           // Create the deployment.
@@ -256,20 +254,15 @@ export class Repository {
   async request(sha: string, env: string, run: number): Promise<void> {
     const api = await this.api()
 
-    // Get the deployment reference.
-    const ref = deployment.reference(env)
-
-    // Create the deployment reference branch. This makes it possible to
-    // distinguish between deployment environments when multiple
-    // deployment configurations are provided. Otherwise a GitHub Actions
-    // workflow run would have no association to the deployment that
-    // triggered it.
     try {
-      // Attempt to update an existing deployment reference branch.
-      await api.git.updateRef({ ...this.params(), sha, ref: `heads/${ref}`, force: true })
+      // Lock the deployment to the commit SHA. This prevents the deployment
+      // from being triggered on another commit or by a duplicate request.
+      await this.lock(api, env, sha)
     } catch {
-      // Alternatively attempt to create a new deployment reference branch.
-      await api.git.createRef({ ...this.params(), sha, ref: `refs/heads/${ref}` })
+      // Otherwise stop processing. Ideally this would alert the user that a
+      // deployment is already in progress but that would leave the status
+      // incorrect once the deployment is complete.
+      return
     }
 
     // Get the check run.
@@ -290,6 +283,11 @@ export class Repository {
    * @param suite - The GitHub Actions check suite identifier.
    */
   async started(sha: string, env: string, suite: number): Promise<void> {
+    const api = await this.api()
+
+    // Ensure that the deployment environment is locked.
+    await this.ensure(api, env, sha)
+
     // Get the latest deployment workflow run.
     const run = await workflow.get(this, sha, env)
 
@@ -332,6 +330,11 @@ export class Repository {
    * @param suite - The GitHub Actions check suite identifier.
    */
   async completed(sha: string, env: string, suite: number): Promise<void> {
+    const api = await this.api()
+
+    // Ensure that the deployment environment is locked.
+    await this.ensure(api, env, sha)
+
     // Get the latest deployment workflow run.
     const run = await workflow.get(this, sha, env)
 
@@ -363,6 +366,107 @@ export class Repository {
       case 'failure': {
         await status.failure(this, env, chk, dep)
         break
+      }
+    }
+
+    // Unlock the deployment environment.
+    await this.unlock(api, env)
+  }
+
+  /**
+   * Locks a deployment environment to a specific commit SHA.
+   *
+   * The implementation uses a custom `deployments/:environment` branch to
+   * ensure that a deployment is tied to a specific commit SHA. This eliminates
+   * the need for a separate data store to track locks.
+   *
+   * The branch also makes it possible to associate a GitHub Actions deployment
+   * workflow run with the environment. Coupled with the lock it then becomes
+   * possible to map a deployment workflow run to the deployment event that
+   * triggered it.
+   *
+   * @param api - The GitHub REST API client.
+   * @param env - The deployment environment identifier.
+   * @param sha - The commit SHA.
+   */
+  async lock(api: Octokit, env: string, sha: string): Promise<void> {
+    // Get the deployment reference.
+    const ref = deployment.reference(env)
+
+    try {
+      // Attempt to create the branch.
+      await api.git.createRef({ ...this.params(), sha, ref: `refs/heads/${ref}` })
+    } catch {
+      // Otherwise the branch already exists.
+      throw new Error(`Failed to acquire lock for ${env} at ${sha}`)
+    }
+  }
+
+  /**
+   * Unlocks a deployment environment.
+   *
+   * @param api - The GitHub REST API client.
+   * @param env - The deployment environment identifier.
+   */
+  async unlock(api: Octokit, env: string): Promise<void> {
+    // Get the deployment reference.
+    const ref = deployment.reference(env)
+
+    try {
+      // Attempt to delete the branch.
+      await api.git.deleteRef({ ...this.params(), ref: `heads/${ref}` })
+    } catch {
+      // Otherwise the deployment is not locked.
+      throw new Error(`Failed to release lock for ${env}`)
+    }
+  }
+
+  /**
+   * Checks if a deployment environment is locked.
+   *
+   * @param api - The GitHub REST API client.
+   * @param env - The deployment environment identifier.
+   *
+   * @returns Whether the deployment environment is locked or not.
+   */
+  async locked(api: Octokit, env: string): Promise<boolean> {
+    // Get the deployment reference.
+    const ref = deployment.reference(env)
+
+    try {
+      // Check if the branch exists.
+      await api.git.getRef({ ...this.params(), ref: `heads/${ref}` })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Ensures that a deployment environment is locked to a specific commit SHA.
+   *
+   * @param api - The GitHub REST API client.
+   * @param env - The deployment environment identifier.
+   * @param sha - The commit SHA.
+   */
+  async ensure(api: Octokit, env: string, sha: string): Promise<void> {
+    // Get the deployment reference.
+    const ref = deployment.reference(env)
+
+    try {
+      // Attempt to acquire the lock. This will more often than not fail but it
+      // allows for race conditions if performed first.
+      await this.lock(api, env, sha)
+    } catch {
+      // Otherwise attempt to ensure that the lock exists. This is done second
+      // because if two processes were to ensure that the lock exists at the
+      // same time then both would succeed whereas in the reverse order one
+      // would fail.
+      const res = await api.git.getRef({ ...this.params(), ref: `heads/${ref}` })
+
+      // Check that the SHA matches.
+      if (res.data.object.sha !== sha) {
+        throw new Error(`Failed to ensure lock for ${env} at ${sha}`)
       }
     }
   }
