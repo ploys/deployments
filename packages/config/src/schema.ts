@@ -10,6 +10,7 @@ export function schema(): Joi.ObjectSchema<any> {
     id: id().required(),
     name: name().required(),
     description: description().required(),
+    url: url(),
     on: triggers().required(),
   })
 }
@@ -39,6 +40,15 @@ export function name(): Joi.StringSchema {
  */
 export function description(): Joi.StringSchema {
   return Joi.string().max(140)
+}
+
+/**
+ * Defines the configuration url schema.
+ *
+ * @returns The configuration url schema definition.
+ */
+export function url(): Joi.StringSchema {
+  return Joi.string().uri()
 }
 
 /**

@@ -891,6 +891,7 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
+        .persist()
         .get('/repos/ploys/tests/contents/.github%2Fdeployments')
         .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
         .reply(200, [
@@ -903,6 +904,7 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
+        .persist()
         .get('/repos/ploys/tests/contents/.github%2Fdeployments%2Fstaging.yml')
         .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
         .reply(200, {
@@ -1180,6 +1182,7 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
+        .persist()
         .get('/repos/ploys/tests/contents/.github%2Fdeployments')
         .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
         .reply(200, [
@@ -1192,6 +1195,7 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
+        .persist()
         .get('/repos/ploys/tests/contents/.github%2Fdeployments%2Fstaging.yml')
         .query({ ref: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' })
         .reply(200, {

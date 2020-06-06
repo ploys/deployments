@@ -171,12 +171,14 @@ export async function started(
  * @param env - The deployment environment identifier.
  * @param run - The associated check run.
  * @param dep - The deployment.
+ * @param url - The deployment environment url.
  */
 export async function success(
   ctx: Repository,
   env: string,
   run: CheckRun,
-  dep: Deployment
+  dep: Deployment,
+  url?: string
 ): Promise<void> {
   const api = await ctx.api()
 
@@ -186,6 +188,7 @@ export async function success(
     deployment_id: dep.id,
     state: 'success',
     description: `Deployed to the ${env} environment.`,
+    environment_url: url,
     log_url: run.html_url,
     auto_inactive: true,
   })

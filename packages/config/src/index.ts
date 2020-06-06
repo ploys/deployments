@@ -30,6 +30,7 @@ export type ConfigData = {
   id: string
   name: string
   description: string
+  url?: string
   on: Triggers
 }
 
@@ -80,6 +81,15 @@ export class Config {
    */
   public description(): string {
     return this.data.description
+  }
+
+  /**
+   * Gets the deployment url.
+   *
+   * @returns The deployment url.
+   */
+  public url(): string | undefined {
+    return this.data.url
   }
 
   /**

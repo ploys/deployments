@@ -444,7 +444,32 @@ export class Repository {
     // Handle the workflow run conclusion.
     switch (run.conclusion) {
       case 'success': {
-        await status.success(this, env, chk, dep)
+        let url: string | undefined
+
+        // Attempt to get the deployment environment url. This is wrapped in a
+        // try-finally to ensure that the status is set regardless of whether
+        // the attempt to load the configuration fails.
+        try {
+          // List the deployment configuration.
+          const list = await Config.list(api, {
+            ...this.params(),
+            ref: sha,
+            path: '.github/deployments',
+          })
+
+          // Iterate over the configuration entries.
+          for (const [key, [, cfg]] of util.entries(list)) {
+            // Ensure that the deployment environment matches.
+            if (cfg && key === env) {
+              // Get the environment URL, which may be undefined.
+              url = cfg.url()
+            }
+          }
+        } finally {
+          // Set the status to success regardless of errors.
+          await status.success(this, env, chk, dep, url)
+        }
+
         break
       }
 

@@ -136,4 +136,17 @@ describe('config', () => {
     )
     matches({ ...defaults, on: { manual: { branches: ['one'] } } }, 'manual', 'two', false)
   })
+
+  test('validates url', () => {
+    valid({ ...defaults, on: 'push' })
+    valid({ ...defaults, on: 'push', url: 'http://example.com' })
+    valid({ ...defaults, on: 'push', url: 'https://www.example.com' })
+    valid({ ...defaults, on: 'push', url: 'https://www.example.com/path/to/something' })
+
+    invalid({ ...defaults, on: 'push', url: '' })
+    invalid({ ...defaults, on: 'push', url: 'example.com' })
+    invalid({ ...defaults, on: 'push', url: 'www.example.com' })
+    invalid({ ...defaults, on: 'push', url: 'www.example.com/path/to/something' })
+    invalid({ ...defaults, on: 'push', url: '/path/to/something' })
+  })
 })
