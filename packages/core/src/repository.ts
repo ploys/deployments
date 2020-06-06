@@ -276,6 +276,91 @@ export class Repository {
   }
 
   /**
+   * Rerequests a deployment.
+   *
+   * @param sha - The commit SHA.
+   * @param env - The deployment environment identifier.
+   * @param last - The previous check run identifier.
+   */
+  async rerequest(sha: string, env: string, last: number): Promise<void> {
+    const api = await this.api()
+
+    try {
+      // Lock the deployment to the commit SHA. This prevents the deployment
+      // from being triggered on another commit or by a duplicate rerequest.
+      await this.lock(api, env, sha)
+    } catch {
+      // Otherwise stop processing.
+      return
+    }
+
+    // Get the previous check run.
+    const chk = await check.get(this, last)
+
+    // Ensure that the previous check run was completed as failure. This should
+    // always be the case for a rerequested check.
+    if (chk.status !== 'completed' || chk.conclusion !== 'failure') {
+      return
+    }
+
+    // Check if a deployment workflow exists. This should never change for a
+    // rerun but GitHub will offer the option to rerequest the check anyway.
+    const exists = await workflow.exists(this, sha)
+
+    // Handle the missing deployment workflow. This simply creates a fresh
+    // check to update the timestamp and acknowledge that the request was
+    // performed.
+    if (!exists) {
+      // Create the check run for the deployment environment.
+      const run = await check.create(this, sha, env)
+
+      // Set the status to missing.
+      await status.missing(this, env, run)
+
+      return
+    }
+
+    // Load deployment configuration.
+    const list = await Config.list(api, { ...this.params(), ref: sha, path: '.github/deployments' })
+
+    // Iterate over each of the deployment configuration entries. This is done
+    // because the name of the environment may differ from the file name.
+    for (const [key, [err, cfg]] of util.entries(list)) {
+      // Ensure that the deployment environment matches.
+      if (key === env) {
+        // Handle the error case. This will likely be the same as the previous
+        // run but allows for changes to the application to take effect instead
+        // of simply ignoring the request.
+        if (err) {
+          // Create a new check run for the deployment environment.
+          const run = await check.create(this, sha, env)
+
+          // Set the status to invalid.
+          await status.invalid(this, env, run, err.message)
+
+          break
+        }
+
+        // Handle valid configuration. There is no need to check if the config
+        // matches here as this is a rerequest. It is also not possible to
+        // accurately determine the branch.
+        if (cfg) {
+          // Create the check run for the deployment environment.
+          const run = await check.create(this, sha, env)
+
+          // Create the deployment.
+          const dep = await deployment.create(this, env, run.id)
+
+          // Set the status to queued.
+          await status.queued(this, env, run, dep)
+        }
+
+        break
+      }
+    }
+  }
+
+  /**
    * Marks a deployment as started.
    *
    * @param sha - The commit SHA.
