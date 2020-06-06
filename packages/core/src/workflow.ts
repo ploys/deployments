@@ -28,7 +28,7 @@ export async function list(ctx: Repository, sha: string, env: string): Promise<W
   const ref = deployment.reference(env)
 
   // Query the deployment workflow runs.
-  const res = await api.actions.listRepoWorkflowRuns({
+  const res = await api.actions.listWorkflowRunsForRepo({
     ...ctx.params(),
     event: 'deployment',
     branch: ref,

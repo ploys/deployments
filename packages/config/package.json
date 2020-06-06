@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
-    "@octokit/rest": "^17.9.2",
+    "@octokit/rest": "^17.10.0",
     "await-to-js": "^2.1.1",
     "js-yaml": "^3.14.0"
   },
