@@ -16,6 +16,7 @@ export async function missing(ctx: Repository, env: string, run: CheckRun): Prom
   await api.checks.update({
     ...ctx.params(),
     check_run_id: run.id,
+    details_url: run.html_url,
     status: 'completed',
     conclusion: 'failure',
     output: {
@@ -45,6 +46,7 @@ export async function invalid(
   await api.checks.update({
     ...ctx.params(),
     check_run_id: run.id,
+    details_url: run.html_url,
     status: 'completed',
     conclusion: 'failure',
     output: {
@@ -69,6 +71,7 @@ export async function ready(ctx: Repository, env: string, run: CheckRun): Promis
   await api.checks.update({
     ...ctx.params(),
     check_run_id: run.id,
+    details_url: run.html_url,
     status: 'completed',
     conclusion: 'neutral',
     actions: [
