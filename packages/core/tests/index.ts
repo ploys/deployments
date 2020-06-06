@@ -990,6 +990,11 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
+        .get('/repos/ploys/tests/git/ref/heads%2Fdeployments%2Fstaging')
+        .reply(200, { object: { sha: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' } })
+
+      cx.expect()
+        .intercept()
         .get('/repos/ploys/tests/actions/runs')
         .query({ event: 'deployment', branch: 'deployments/staging' })
         .reply(200, {
@@ -1054,6 +1059,11 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
+        .get('/repos/ploys/tests/git/ref/heads%2Fdeployments%2Fstaging')
+        .reply(200, { object: { sha: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' } })
+
+      cx.expect()
+        .intercept()
         .get('/repos/ploys/tests/actions/runs')
         .query({ event: 'deployment', branch: 'deployments/staging' })
         .reply(200, {
@@ -1114,6 +1124,11 @@ describe('application', () => {
           })
           return true
         })
+        .reply(200)
+
+      cx.expect()
+        .intercept()
+        .delete('/repos/ploys/tests/git/refs/heads%2Fdeployments%2Fstaging')
         .reply(200)
 
       await cx.receive('check_suite', checkSuite)
@@ -1277,6 +1292,11 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
+        .get('/repos/ploys/tests/git/ref/heads%2Fdeployments%2Fstaging')
+        .reply(200, { object: { sha: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' } })
+
+      cx.expect()
+        .intercept()
         .get('/repos/ploys/tests/actions/runs')
         .query({ event: 'deployment', branch: 'deployments/staging' })
         .reply(200, {
@@ -1341,6 +1361,11 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
+        .get('/repos/ploys/tests/git/ref/heads%2Fdeployments%2Fstaging')
+        .reply(200, { object: { sha: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' } })
+
+      cx.expect()
+        .intercept()
         .get('/repos/ploys/tests/actions/runs')
         .query({ event: 'deployment', branch: 'deployments/staging' })
         .reply(200, {
@@ -1401,6 +1426,11 @@ describe('application', () => {
           })
           return true
         })
+        .reply(200)
+
+      cx.expect()
+        .intercept()
+        .delete('/repos/ploys/tests/git/refs/heads%2Fdeployments%2Fstaging')
         .reply(200)
 
       await cx.receive('check_suite', checkSuite)
