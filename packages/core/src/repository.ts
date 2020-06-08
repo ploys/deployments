@@ -1,9 +1,12 @@
 import type { Types } from '@octokit/auth-app'
+import type { TriggerName } from '@ploys/deployments-config'
 
 import { Octokit } from '@octokit/rest'
-import { Config, TriggerName } from '@ploys/deployments-config'
+
+import to from 'await-to-js'
 
 import * as check from './check'
+import * as config from './config'
 import * as deployment from './deployment'
 import * as status from './status'
 import * as util from './util'
@@ -162,7 +165,7 @@ export class Repository {
     const exists = await workflow.exists(this, sha)
 
     // Load deployment configuration.
-    const list = await Config.list(api, { ...this.params(), ref: sha, path: '.github/deployments' })
+    const list = await config.list(this, api, sha)
 
     // Iterate over each of the deployment configuration entries.
     for (const [env, [err, cfg]] of util.entries(list)) {
@@ -320,43 +323,25 @@ export class Repository {
       return
     }
 
-    // Load deployment configuration.
-    const list = await Config.list(api, { ...this.params(), ref: sha, path: '.github/deployments' })
+    // Attempt to load the deployment configuration.
+    const [err, cfg] = await to(config.get(this, api, sha, env))
 
-    // Iterate over each of the deployment configuration entries. This is done
-    // because the name of the environment may differ from the file name.
-    for (const [key, [err, cfg]] of util.entries(list)) {
-      // Ensure that the deployment environment matches.
-      if (key === env) {
-        // Handle the error case. This will likely be the same as the previous
-        // run but allows for changes to the application to take effect instead
-        // of simply ignoring the request.
-        if (err) {
-          // Create a new check run for the deployment environment.
-          const run = await check.create(this, sha, env)
+    // Handle the error case. This will likely be the same as the previous run
+    // but it allows for changes to the application to take effect instead of
+    // simply ignoring the request.
+    if (err) {
+      const run = await check.create(this, sha, env)
+      await status.invalid(this, env, run, err.message)
+      return
+    }
 
-          // Set the status to invalid.
-          await status.invalid(this, env, run, err.message)
-
-          break
-        }
-
-        // Handle valid configuration. There is no need to check if the config
-        // matches here as this is a rerequest. It is also not possible to
-        // accurately determine the branch.
-        if (cfg) {
-          // Create the check run for the deployment environment.
-          const run = await check.create(this, sha, env)
-
-          // Create the deployment.
-          const dep = await deployment.create(this, env, run.id)
-
-          // Set the status to queued.
-          await status.queued(this, env, run, dep)
-        }
-
-        break
-      }
+    // Handle valid configuration. There is no need to check if the config
+    // matches here as this is a rerequest. It is also not possible to
+    // accurately determine the branch.
+    if (cfg) {
+      const run = await check.create(this, sha, env)
+      const dep = await deployment.create(this, env, run.id)
+      await status.queued(this, env, run, dep)
     }
   }
 
@@ -444,32 +429,8 @@ export class Repository {
     // Handle the workflow run conclusion.
     switch (run.conclusion) {
       case 'success': {
-        let url: string | undefined
-
-        // Attempt to get the deployment environment url. This is wrapped in a
-        // try-finally to ensure that the status is set regardless of whether
-        // the attempt to load the configuration fails.
-        try {
-          // List the deployment configuration.
-          const list = await Config.list(api, {
-            ...this.params(),
-            ref: sha,
-            path: '.github/deployments',
-          })
-
-          // Iterate over the configuration entries.
-          for (const [key, [, cfg]] of util.entries(list)) {
-            // Ensure that the deployment environment matches.
-            if (cfg && key === env) {
-              // Get the environment URL, which may be undefined.
-              url = cfg.url()
-            }
-          }
-        } finally {
-          // Set the status to success regardless of errors.
-          await status.success(this, env, chk, dep, url)
-        }
-
+        const [, cfg] = await to(config.get(this, api, sha, env))
+        await status.success(this, env, chk, dep, cfg?.url())
         break
       }
 
