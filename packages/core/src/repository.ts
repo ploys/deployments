@@ -252,9 +252,8 @@ export class Repository {
    *
    * @param sha - The commit SHA.
    * @param env - The deployment environment identifier.
-   * @param run - The check run identifier.
    */
-  async request(sha: string, env: string, run: number): Promise<void> {
+  async request(sha: string, env: string): Promise<void> {
     const api = await this.api()
 
     try {
@@ -268,13 +267,9 @@ export class Repository {
       return
     }
 
-    // Get the check run.
-    const chk = await check.get(this, run)
-
-    // Create the deployment.
-    const dep = await deployment.create(this, env, run)
-
-    // Set the status to queued.
+    // Queue the deployment under a new check run.
+    const chk = await check.create(this, sha, env)
+    const dep = await deployment.create(this, env, chk.id)
     await status.queued(this, env, chk, dep)
   }
 
