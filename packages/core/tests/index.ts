@@ -1251,11 +1251,19 @@ describe('application', () => {
         })
         .reply(201)
 
-      cx.expect().intercept().get('/repos/ploys/tests/check-runs/1').reply(200, {
-        id: 1,
-        status: 'completed',
-        conclusion: 'neutral',
-      })
+      cx.expect()
+        .intercept()
+        .post('/repos/ploys/tests/check-runs', body => {
+          expect(body).toMatchObject({
+            name: 'staging',
+            external_id: 'staging',
+            status: 'queued',
+          })
+          return true
+        })
+        .reply(201, {
+          id: 2,
+        })
 
       cx.expect()
         .intercept()
@@ -1264,7 +1272,7 @@ describe('application', () => {
             environment: 'staging',
             ref: 'deployments/staging',
             payload: {
-              check_run_id: 1,
+              check_run_id: 2,
             },
           })
           return true
@@ -1285,7 +1293,7 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
-        .patch('/repos/ploys/tests/check-runs/1', body => {
+        .patch('/repos/ploys/tests/check-runs/2', body => {
           expect(body).toMatchObject({
             status: 'queued',
           })
@@ -1332,13 +1340,13 @@ describe('application', () => {
             environment: 'staging',
             state: 'queued',
             payload: {
-              check_run_id: 1,
+              check_run_id: 2,
             },
           },
         ])
 
-      cx.expect().intercept().get('/repos/ploys/tests/check-runs/1').reply(200, {
-        id: 1,
+      cx.expect().intercept().get('/repos/ploys/tests/check-runs/2').reply(200, {
+        id: 2,
         status: 'queued',
       })
 
@@ -1354,7 +1362,7 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
-        .patch('/repos/ploys/tests/check-runs/1', body => {
+        .patch('/repos/ploys/tests/check-runs/2', body => {
           expect(body).toMatchObject({
             status: 'in_progress',
           })
@@ -1402,12 +1410,12 @@ describe('application', () => {
             environment: 'staging',
             state: 'in_progress',
             payload: {
-              check_run_id: 1,
+              check_run_id: 2,
             },
           },
         ])
 
-      cx.expect().intercept().get('/repos/ploys/tests/check-runs/1').reply(200, {
+      cx.expect().intercept().get('/repos/ploys/tests/check-runs/2').reply(200, {
         id: 1,
         status: 'in_progress',
       })
