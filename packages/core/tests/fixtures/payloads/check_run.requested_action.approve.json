@@ -1,0 +1,68 @@
+{
+  "action": "requested_action",
+  "requested_action": {
+    "identifier": "approve"
+  },
+  "check_run": {
+    "id": 1,
+    "name": "staging",
+    "head_sha": "da4b9237bacccdf19c0760cab7aec4a8359010b0",
+    "external_id": "staging",
+    "status": "completed",
+    "conclusion": "action_required",
+    "started_at": "2020-05-25T20:00:00Z",
+    "completed_at": "2020-05-25T20:00:00Z",
+    "output": {
+      "title": "Action required",
+      "summary": "Action required for deployment to the staging environment."
+    },
+    "check_suite": {
+      "id": 1,
+      "head_branch": "deployments/staging",
+      "head_sha": "da4b9237bacccdf19c0760cab7aec4a8359010b0",
+      "status": "queued",
+      "conclusion": null,
+      "before": "356a192b7913b04c54574d18c28d46e6395428ab",
+      "after": "da4b9237bacccdf19c0760cab7aec4a8359010b0",
+      "pull_requests": [],
+      "app": {
+        "id": 1,
+        "name": "Deployments Bot",
+        "slug": "deployments-bot",
+        "owner": {
+          "id": 1,
+          "type": "User",
+          "login": "ploys"
+        }
+      }
+    },
+    "app": {
+      "id": 1,
+      "name": "Deployments Bot",
+      "slug": "deployments-bot",
+      "owner": {
+        "id": 1,
+        "type": "User",
+        "login": "ploys"
+      }
+    },
+    "pull_requests": []
+  },
+  "repository": {
+    "id": 1,
+    "name": "tests",
+    "full_name": "ploys/tests",
+    "private": false,
+    "owner": {
+      "id": 1,
+      "type": "User",
+      "login": "ploys"
+    },
+    "default_branch": "master"
+  },
+  "sender": {
+    "id": 1,
+    "type": "User",
+    "login": "ploys"
+  }
+}
