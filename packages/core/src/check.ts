@@ -1,4 +1,4 @@
-import type { RestEndpointMethodTypes } from '@octokit/rest'
+import type { Octokit, RestEndpointMethodTypes } from '@octokit/rest'
 
 import { Repository } from './repository'
 
@@ -6,6 +6,34 @@ import { Repository } from './repository'
  * Re-exports the check run type.
  */
 export type CheckRun = RestEndpointMethodTypes['checks']['create']['response']['data']
+
+/**
+ * Finds the latest deployment check run.
+ *
+ * @param ctx - The repository context.
+ * @param api - The GitHub REST API client.
+ * @param sha - The commit SHA.
+ * @param env - The deployment environment identifier.
+ */
+export async function find(
+  ctx: Repository,
+  api: Octokit,
+  sha: string,
+  env: string
+): Promise<CheckRun> {
+  const list = await api.checks.listForRef({
+    ...ctx.params(),
+    ref: sha,
+    check_name: env,
+    filter: 'latest',
+  })
+
+  if (list.data.total_count > 0) {
+    return list.data.check_runs[0]
+  }
+
+  throw new Error(`Unable to find check run for ${env} at ${sha}`)
+}
 
 /**
  * Gets the deployment check run.

@@ -14,7 +14,7 @@
     "completed_at": "2020-05-25T20:00:00Z",
     "output": {
       "title": "Not deployed",
-      "summary": "Not deployed to the staging eenvironment."
+      "summary": "Not deployed to the staging environment."
     },
     "check_suite": {
       "id": 1,

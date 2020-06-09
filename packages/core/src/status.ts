@@ -1,3 +1,5 @@
+import type { RestEndpointMethodTypes } from '@octokit/rest'
+
 import { CheckRun } from './check'
 import { Deployment } from './deployment'
 import { Repository } from './repository'
@@ -243,6 +245,49 @@ export async function failure(
     output: {
       title: 'Failed',
       summary: `Failed deployment to the ${env} environment.`,
+    },
+  })
+}
+
+/**
+ * Sets the deployment check status to incomplete.
+ *
+ * @param ctx - The repository context.
+ * @param env - The deployment environment identifier.
+ * @param run - The associated check run.
+ * @param dep - The deployment.
+ * @param actions - The further deployment actions.
+ */
+export async function incomplete(
+  ctx: Repository,
+  env: string,
+  run: CheckRun,
+  dep: Deployment,
+  actions: RestEndpointMethodTypes['checks']['create']['parameters']['actions']
+): Promise<void> {
+  const api = await ctx.api()
+
+  // Update the status of the deployment.
+  await api.repos.createDeploymentStatus({
+    ...ctx.params(),
+    deployment_id: dep.id,
+    state: 'pending',
+    description: `Action required for deployment to the ${env} environment.`,
+    log_url: run.html_url,
+    auto_inactive: false,
+  })
+
+  // Update the status of the associated check run.
+  await api.checks.update({
+    ...ctx.params(),
+    check_run_id: run.id,
+    details_url: run.html_url,
+    status: 'completed',
+    conclusion: 'action_required',
+    actions,
+    output: {
+      title: 'Action required',
+      summary: `Action required for deployment to the ${env} environment.`,
     },
   })
 }

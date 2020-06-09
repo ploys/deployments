@@ -1,12 +1,16 @@
+import type { Octokit } from '@octokit/rest'
+import type { Trigger, TriggerName, Triggers } from './trigger'
+import type { Stages } from './stage'
+
 import { basename, extname } from 'path'
-import { Octokit } from '@octokit/rest'
-import { Trigger, TriggerName, Triggers } from './trigger'
 import { schema as definition } from './schema'
 
 import to from 'await-to-js'
 import yaml from 'js-yaml'
 
-export { Trigger, TriggerName, Triggers } from './trigger'
+export type { Trigger, TriggerName, Triggers } from './trigger'
+export type { Stage, Stages } from './stage'
+export type { Action, Actions } from './action'
 
 /**
  * The generated schema.
@@ -32,6 +36,7 @@ export type ConfigData = {
   description: string
   url?: string
   on: Triggers
+  stages: Stages
 }
 
 /**
@@ -99,6 +104,15 @@ export class Config {
    */
   public triggers(): Triggers {
     return this.data.on
+  }
+
+  /**
+   * Gets the deployment stages.
+   *
+   * @returns The deployment stages.
+   */
+  public stages(): Stages {
+    return this.data.stages
   }
 
   /**
@@ -204,6 +218,12 @@ export class Config {
     return {
       id,
       description: `The ${id} environment.`,
+      stages: {
+        deploy: {
+          name: 'Deploy',
+          description: `Deploy to ${id}`,
+        },
+      },
     }
   }
 }

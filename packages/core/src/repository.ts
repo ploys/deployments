@@ -1,3 +1,4 @@
+import type { RestEndpointMethodTypes } from '@octokit/rest'
 import type { Types } from '@octokit/auth-app'
 import type { TriggerName } from '@ploys/deployments-config'
 
@@ -14,6 +15,16 @@ import * as workflow from './workflow'
 
 import { Application } from './application'
 import { Installation } from './installation'
+
+/**
+ * Defines the check run actions.
+ */
+type Actions = RestEndpointMethodTypes['checks']['create']['parameters']['actions']
+
+/**
+ * Defines the check run action.
+ */
+type Action = util.Defined<Actions>[0]
 
 /**
  * The repository options.
@@ -219,8 +230,20 @@ export class Repository {
             continue
           }
 
+          // Get the deployment stages.
+          const stages = cfg.stages()
+          const include: string[] = []
+
+          // Iterate over the deployment stages.
+          for (const [key, stage] of util.entries(stages)) {
+            // Find stages without dependencies.
+            if (!stage.needs) {
+              include.push(key)
+            }
+          }
+
           // Create the deployment.
-          const dep = await deployment.create(this, env, run.id)
+          const dep = await deployment.create(this, env, run.id, 'deploy', include, [])
 
           // Set the status to queued.
           await status.queued(this, env, run, dep)
@@ -252,25 +275,101 @@ export class Repository {
    *
    * @param sha - The commit SHA.
    * @param env - The deployment environment identifier.
+   * @param run - The check run identifier.
+   * @param action - The requested action.
    */
-  async request(sha: string, env: string): Promise<void> {
+  async request(sha: string, env: string, run: number, action: string): Promise<void> {
     const api = await this.api()
 
-    try {
-      // Lock the deployment to the commit SHA. This prevents the deployment
-      // from being triggered on another commit or by a duplicate request.
-      await this.lock(api, env, sha)
-    } catch {
-      // Otherwise stop processing. Ideally this would alert the user that a
-      // deployment is already in progress but that would leave the status
-      // incorrect once the deployment is complete.
-      return
+    // Get the deployment for this check run.
+    const [, cur] = await to(deployment.get(this, sha, env, run))
+
+    // If there is no current deployment then this is a new deployment and the
+    // branch should be locked.
+    if (!cur) {
+      try {
+        // Lock the deployment to the commit SHA. This prevents the deployment
+        // from being triggered on another commit or by a duplicate request.
+        await this.lock(api, env, sha)
+      } catch {
+        // Otherwise stop processing. Ideally this would alert the user that a
+        // deployment is already in progress but that would leave the status
+        // incorrect once the deployment is complete.
+        return
+      }
+    }
+    // Otherwise the deployment is between stages and the branch should already
+    // be locked.
+    else {
+      try {
+        await this.ensure(api, env, sha)
+      } catch {
+        return
+      }
     }
 
-    // Queue the deployment under a new check run.
+    // Get the latest check run for the target commit and environment.
+    const [, found] = await to(check.find(this, api, sha, env))
+
+    // Ensure that the found check run is the same as the current check run. If
+    // they do not match then the current check run is considered stale.
+    if (!found || found.id !== run) return
+
+    // Create the check run as early as possible to allow the above test to
+    // work.
     const chk = await check.create(this, sha, env)
-    const dep = await deployment.create(this, env, chk.id)
-    await status.queued(this, env, chk, dep)
+
+    // Get the deployment configuration.
+    const [err, cfg] = await to(config.get(this, api, sha, env))
+
+    // Handle invalid configuration. This should never happen unless the
+    // application is updated and alters the configuration schema.
+    if (err) {
+      await status.invalid(this, env, chk, err.message)
+    }
+
+    // Handle valid configuration.
+    if (cfg) {
+      const include: string[] = []
+
+      // If this check run has a deployment then there is a stage in progress
+      // and the requested action should be used.
+      if (cur) {
+        // Iterate over the deployment stages.
+        for (const [key, stage] of util.entries(cfg.stages())) {
+          // Check if the stage is valid and includes the given action.
+          if (cur.payload.stages.includes(key) && stage.actions && action in stage.actions) {
+            // Collect each of the target stages to run.
+            for (const item of util.array(stage.actions[action]!.runs)) {
+              include.push(item)
+            }
+          }
+        }
+
+        // Get the completed stages.
+        const complete = [...cur.payload.completed_stages, ...cur.payload.stages]
+        const unique = util.unique(include)
+
+        // Queue the deployment under a new check run.
+        const dep = await deployment.create(this, env, chk.id, `deploy:${action}`, unique, complete)
+        await status.queued(this, env, chk, dep)
+        await deployment.remove(this, api, cur.id)
+      }
+      // Otherwise it can be assumed that this is a new deployment.
+      else {
+        // Iterate over the deployment stages.
+        for (const [key, stage] of util.entries(cfg.stages())) {
+          // Find stages without dependencies.
+          if (!stage.needs) {
+            include.push(key)
+          }
+        }
+
+        // Queue the deployment under a new check run.
+        const dep = await deployment.create(this, env, chk.id, 'deploy', include, [])
+        await status.queued(this, env, chk, dep)
+      }
+    }
   }
 
   /**
@@ -283,13 +382,31 @@ export class Repository {
   async rerequest(sha: string, env: string, last: number): Promise<void> {
     const api = await this.api()
 
-    try {
-      // Lock the deployment to the commit SHA. This prevents the deployment
-      // from being triggered on another commit or by a duplicate rerequest.
-      await this.lock(api, env, sha)
-    } catch {
-      // Otherwise stop processing.
-      return
+    // Get the deployment for this check run.
+    const [, cur] = await to(deployment.get(this, sha, env, last))
+
+    // If there is no current deployment then this is a new deployment and the
+    // branch should be locked.
+    if (!cur) {
+      try {
+        // Lock the deployment to the commit SHA. This prevents the deployment
+        // from being triggered on another commit or by a duplicate rerequest.
+        await this.lock(api, env, sha)
+      } catch {
+        // Otherwise stop processing. Ideally this would alert the user that a
+        // deployment is already in progress but that would leave the status
+        // incorrect once the deployment is complete.
+        return
+      }
+    }
+    // Otherwise the deployment is between stages and the branch should already
+    // be locked.
+    else {
+      try {
+        await this.ensure(api, env, sha)
+      } catch {
+        return
+      }
     }
 
     // Get the previous check run.
@@ -334,9 +451,33 @@ export class Repository {
     // matches here as this is a rerequest. It is also not possible to
     // accurately determine the branch.
     if (cfg) {
-      const run = await check.create(this, sha, env)
-      const dep = await deployment.create(this, env, run.id)
-      await status.queued(this, env, run, dep)
+      // If there is a previous deployment then repeat it with the same stages.
+      if (cur) {
+        const stages = cur.payload.stages
+        const completed = cur.payload.completed_stages
+
+        const run = await check.create(this, sha, env)
+        const dep = await deployment.create(this, env, run.id, cur.task, stages, completed)
+        await status.queued(this, env, run, dep)
+        await deployment.remove(this, api, cur.id)
+      }
+      // Otherwise the deployment did not start so start again from the
+      // beginning.
+      else {
+        const include: string[] = []
+
+        // Iterate over the deployment stages.
+        for (const [key, stage] of util.entries(cfg.stages())) {
+          // Find stages without dependencies.
+          if (!stage.needs) {
+            include.push(key)
+          }
+        }
+
+        const run = await check.create(this, sha, env)
+        const dep = await deployment.create(this, env, run.id, 'deploy', include, [])
+        await status.queued(this, env, run, dep)
+      }
     }
   }
 
@@ -424,8 +565,60 @@ export class Repository {
     // Handle the workflow run conclusion.
     switch (run.conclusion) {
       case 'success': {
+        // Get the deployment configuration.
         const [, cfg] = await to(config.get(this, api, sha, env))
-        await status.success(this, env, chk, dep, cfg?.url())
+
+        // Handle valid configuration.
+        if (cfg) {
+          const stages = cfg.stages()
+
+          // Collect the actions as a map to deduplicate.
+          const actions: { [key: string]: Action } = {}
+
+          // Iterate over the current deployment stages.
+          for (const stage of dep.payload.stages) {
+            // Check that the stage is valid and contains actions.
+            if (stages[stage] && stages[stage]!.actions) {
+              // Iterate over the stage actions.
+              for (const [key, action] of util.entries(stages[stage]!.actions)) {
+                // Check if the action has already been collected. This may be
+                // the case when another parallel stage defines the same action
+                // so only the first is used.
+                if (!actions[key]) {
+                  actions[key] = {
+                    identifier: key,
+                    label: action.name,
+                    description: action.description || key,
+                  }
+                }
+              }
+            }
+          }
+
+          // Collect the actions as an array.
+          const items = util.values(actions)
+
+          // If there are any further actions then the deployment is considered
+          // incomplete.
+          if (items.length > 0) {
+            await status.incomplete(this, env, chk, dep, items)
+
+            // Exit early as to not unlock the deployment environment. It would
+            // be wrong to allow other deployments in the middle of multiple
+            // stages.
+            return
+          }
+          // Otherwise the deployment is a success.
+          else {
+            await status.success(this, env, chk, dep, cfg?.url())
+          }
+        }
+        // Otherwise something went wrong loading the deployment configuration
+        // but set the status to success anyway.
+        else {
+          await status.success(this, env, chk, dep)
+        }
+
         break
       }
 

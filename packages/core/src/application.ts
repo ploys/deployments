@@ -254,11 +254,13 @@ export class Application {
   ): Promise<void> {
     const sha = event.payload.check_run.head_sha
     const env = event.payload.check_run.external_id
+    const run = event.payload.check_run.id
+    const action: string = (event.payload as any).requested_action.identifier
 
     const inst = await this.installation(event)
     const repo = await inst.repository(event.payload.repository.id)
 
-    await repo.request(sha, env)
+    await repo.request(sha, env, run, action)
   }
 
   /**
