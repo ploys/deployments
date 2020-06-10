@@ -10,8 +10,14 @@ export type Deployment = RestEndpointMethodTypes['repos']['getDeployment']['resp
     check_run_id: number
     stages: string[]
     completed_stages: string[]
+    artifacts: Artifacts
   }
 }
+
+/**
+ * The deployment artifacts.
+ */
+export type Artifacts = { [key: string]: { id: number; url: string } }
 
 /**
  * Gets the deployment reference.
@@ -92,6 +98,7 @@ export async function get(
  * @param task - The task name.
  * @param stages - The deployment stages to run.
  * @param completed - The deployment stages that are already complete.
+ * @param artifacts - The deployment artifacts.
  */
 export async function create(
   ctx: Repository,
@@ -99,7 +106,8 @@ export async function create(
   run: number,
   task: string,
   stages: string[],
-  completed: string[]
+  completed: string[],
+  artifacts: Artifacts
 ): Promise<Deployment> {
   const api = await ctx.api()
 
@@ -114,6 +122,9 @@ export async function create(
     // The completed stages are stored here so that they can be passed to
     // subsequent deployments without having to be tracked by the application.
     completed_stages: completed,
+    // The artifacts are collected and stored so that they can be passed to
+    // subsequent stages.
+    artifacts,
   }
 
   // Create the deployment.
