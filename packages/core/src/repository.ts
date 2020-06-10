@@ -243,7 +243,7 @@ export class Repository {
           }
 
           // Create the deployment.
-          const dep = await deployment.create(this, env, run.id, 'deploy', include, [])
+          const dep = await deployment.create(this, env, run.id, 'deploy', include, [], {})
 
           // Set the status to queued.
           await status.queued(this, env, run, dep)
@@ -350,8 +350,38 @@ export class Repository {
         const complete = [...cur.payload.completed_stages, ...cur.payload.stages]
         const unique = util.unique(include)
 
+        // Get the deployment artifacts from previous stages.
+        const artifacts = { ...cur.payload.artifacts }
+
+        // Get the latest deployment workflow run. This must exist if there is
+        // currently a deployment between stages.
+        const flow = await workflow.get(this, sha, env)
+
+        // Get the workflow run artifacts.
+        const res = await api.actions.listWorkflowRunArtifacts({
+          ...this.params(),
+          run_id: flow.id,
+        })
+
+        // Iterate over the queried artifacts and overwrite those with same
+        // name.
+        for (const artifact of res.data.artifacts) {
+          artifacts[artifact.name] = {
+            id: artifact.id,
+            url: artifact.archive_download_url,
+          }
+        }
+
         // Queue the deployment under a new check run.
-        const dep = await deployment.create(this, env, chk.id, `deploy:${action}`, unique, complete)
+        const dep = await deployment.create(
+          this,
+          env,
+          chk.id,
+          `deploy:${action}`,
+          unique,
+          complete,
+          artifacts
+        )
         await status.queued(this, env, chk, dep)
         await deployment.remove(this, api, cur.id)
       }
@@ -366,7 +396,7 @@ export class Repository {
         }
 
         // Queue the deployment under a new check run.
-        const dep = await deployment.create(this, env, chk.id, 'deploy', include, [])
+        const dep = await deployment.create(this, env, chk.id, 'deploy', include, [], {})
         await status.queued(this, env, chk, dep)
       }
     }
@@ -455,9 +485,18 @@ export class Repository {
       if (cur) {
         const stages = cur.payload.stages
         const completed = cur.payload.completed_stages
+        const artifacts = cur.payload.artifacts
 
         const run = await check.create(this, sha, env)
-        const dep = await deployment.create(this, env, run.id, cur.task, stages, completed)
+        const dep = await deployment.create(
+          this,
+          env,
+          run.id,
+          cur.task,
+          stages,
+          completed,
+          artifacts
+        )
         await status.queued(this, env, run, dep)
         await deployment.remove(this, api, cur.id)
       }
@@ -475,7 +514,7 @@ export class Repository {
         }
 
         const run = await check.create(this, sha, env)
-        const dep = await deployment.create(this, env, run.id, 'deploy', include, [])
+        const dep = await deployment.create(this, env, run.id, 'deploy', include, [], {})
         await status.queued(this, env, run, dep)
       }
     }

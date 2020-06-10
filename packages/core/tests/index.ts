@@ -461,6 +461,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           })
           return true
@@ -623,6 +624,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           })
           return true
@@ -686,6 +688,7 @@ describe('application', () => {
               check_run_id: 2,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           })
           return true
@@ -830,6 +833,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           })
           return true
@@ -972,6 +976,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           })
           return true
@@ -1042,6 +1047,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           },
         ])
@@ -1114,6 +1120,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           },
         ])
@@ -1303,6 +1310,7 @@ describe('application', () => {
               check_run_id: 2,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           })
           return true
@@ -1373,6 +1381,7 @@ describe('application', () => {
               check_run_id: 2,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           },
         ])
@@ -1445,6 +1454,7 @@ describe('application', () => {
               check_run_id: 2,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           },
         ])
@@ -1596,6 +1606,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           })
           return true
@@ -1666,6 +1677,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           },
         ])
@@ -1738,6 +1750,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           },
         ])
@@ -1816,6 +1829,7 @@ describe('application', () => {
               check_run_id: 2,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           })
           return true
@@ -1976,6 +1990,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           })
           return true
@@ -2046,6 +2061,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           },
         ])
@@ -2118,6 +2134,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           },
         ])
@@ -2169,6 +2186,7 @@ describe('application', () => {
               check_run_id: 1,
               stages: ['deploy'],
               completed_stages: [],
+              artifacts: {},
             },
           },
         ])
@@ -2207,6 +2225,38 @@ describe('application', () => {
 
       cx.expect()
         .intercept()
+        .get('/repos/ploys/tests/actions/runs')
+        .query({ event: 'deployment', branch: 'deployments/staging' })
+        .reply(200, {
+          total_count: 1,
+          workflow_runs: [
+            {
+              id: 1,
+              status: 'completed',
+              conclusion: 'success',
+              check_suite_url: '/1',
+              head_sha: 'da4b9237bacccdf19c0760cab7aec4a8359010b0',
+            },
+          ],
+        })
+
+      cx.expect()
+        .intercept()
+        .get('/repos/ploys/tests/actions/runs/1/artifacts')
+        .reply(200, {
+          total_count: 1,
+          artifacts: [
+            {
+              id: 1,
+              name: 'one',
+              archive_download_url:
+                'https://api.github.com/repos/ploys/tests/actions/artifacts/1/zip',
+            },
+          ],
+        })
+
+      cx.expect()
+        .intercept()
         .post('/repos/ploys/tests/deployments', body => {
           expect(body).toMatchObject({
             environment: 'staging',
@@ -2215,6 +2265,12 @@ describe('application', () => {
               check_run_id: 2,
               stages: ['approve'],
               completed_stages: ['deploy'],
+              artifacts: {
+                one: {
+                  id: 1,
+                  url: 'https://api.github.com/repos/ploys/tests/actions/artifacts/1/zip',
+                },
+              },
             },
           })
           return true
@@ -2297,6 +2353,7 @@ describe('application', () => {
               check_run_id: 2,
               stages: ['approve'],
               completed_stages: ['deploy'],
+              artifacts: {},
             },
           },
         ])
@@ -2369,6 +2426,7 @@ describe('application', () => {
               check_run_id: 2,
               stages: ['approve'],
               completed_stages: ['deploy'],
+              artifacts: {},
             },
           },
         ])
