@@ -27,7 +27,7 @@ jobs:
       run: yarn run lint
 
     - name: Publish Packages
-      run: npx lerna publish from-git --yes --no-verify-access
+      run: npx lerna publish from-package --yes --no-verify-access
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -51,6 +51,6 @@ jobs:
       run: yarn run test
 
     - name: Publish Packages
-      run: npx lerna publish from-git --yes --no-verify-access
+      run: npx lerna publish from-package --yes --no-verify-access
       env:
         NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
