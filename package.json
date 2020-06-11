@@ -11,7 +11,8 @@
     "start:dev": "nodemon",
     "lint": "eslint packages",
     "lint:fix": "eslint packages --fix",
-    "test": "jest"
+    "test": "jest",
+    "prepack": "yarn run clean && yarn run build"
   },
   "devDependencies": {
     "@typescript-eslint/parser": "^3.0.0",
@@ -28,6 +29,6 @@
     "typescript": "^3.9.3"
   },
   "engines": {
-    "node": ">= 12.0.0"
+    "node": ">= 12.9.0"
   }
 }

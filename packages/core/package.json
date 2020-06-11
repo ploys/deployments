@@ -1,18 +1,21 @@
 {
   "name": "@ploys/deployments-core",
-  "version": "1.0.0",
-  "description": "Automated continuous deployment and delivery",
+  "version": "0.1.0",
+  "description": "Deployments application core",
   "author": "Daniel Balcomb <daniel.balcomb@gmail.com>",
   "license": "ISC",
-  "private": true,
   "repository": "https://github.com/ploys/deployments",
   "homepage": "https://github.com/ploys/deployments#readme",
   "bugs": "https://github.com/ploys/deployments/issues",
   "keywords": [
+    "ploys",
     "deployments"
   ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "files": [
+    "lib/"
+  ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "clean": "tsc --build tsconfig.build.json --clean"
@@ -22,6 +25,7 @@
     "@octokit/rest": "^17.10.0",
     "@octokit/types": "^4.0.2",
     "@octokit/webhooks": "^7.6.2",
+    "@ploys/deployments-config": "^0.1.0",
     "await-to-js": "^2.1.1",
     "eventsource": "^1.0.7"
   },
@@ -32,5 +36,8 @@
     "@types/js-yaml": "^3.12.4",
     "@types/node": "^14.0.5",
     "js-yaml": "^3.14.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
