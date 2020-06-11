@@ -10,6 +10,7 @@ default_events:
 - installation_repositories
 - pull_request
 - push
+- repository_dispatch
 
 default_permissions:
   actions: read

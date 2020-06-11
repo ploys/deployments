@@ -1,0 +1,21 @@
+{
+  "action": "deployment_status",
+  "branch": "master",
+  "client_payload": {
+    "deployment": 1,
+    "state": "success",
+    "url": "https://dispatch.example.com"
+  },
+  "repository": {
+    "id": 1,
+    "name": "tests",
+    "full_name": "ploys/tests",
+    "private": false,
+    "owner": {
+      "id": 1,
+      "type": "User",
+      "login": "ploys"
+    },
+    "default_branch": "master"
+  }
+}

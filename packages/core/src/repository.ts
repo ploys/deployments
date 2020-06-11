@@ -15,6 +15,7 @@ import * as workflow from './workflow'
 
 import { Application } from './application'
 import { Installation } from './installation'
+import { Status } from './status'
 
 /**
  * Defines the check run actions.
@@ -590,7 +591,7 @@ export class Repository {
       throw new Error(`Invalid workflow run for ${env} on ${suite} at ${sha}`)
     }
 
-    // Ensure that the run is not marked as completed.
+    // Ensure that the run is marked as completed.
     if (run.status !== 'completed') {
       return
     }
@@ -600,6 +601,14 @@ export class Repository {
 
     // Get the associated check run.
     const chk = await check.get(this, dep.payload.check_run_id)
+
+    // Skip processing if the current deployment is already complete. This will
+    // be the case if a deployment was manually updated from an action inside
+    // the workflow.
+    if (chk.status === 'completed') {
+      await this.unlock(api, env)
+      return
+    }
 
     // Handle the workflow run conclusion.
     switch (run.conclusion) {
@@ -669,6 +678,78 @@ export class Repository {
 
     // Unlock the deployment environment.
     await this.unlock(api, env)
+  }
+
+  /**
+   * Marks a deployment with the given status.
+   *
+   * @param payload - The deployment status dispatch payload.
+   */
+  async status(payload: Status): Promise<void> {
+    const api = await this.api()
+    const dep = await deployment.load(this, payload.deployment)
+    const run = await check.get(this, dep.payload.check_run_id)
+    const env = dep.environment
+    const sha = dep.sha
+
+    switch (payload.state) {
+      case 'success': {
+        // Get the deployment configuration.
+        const [, cfg] = await to(config.get(this, api, sha, env))
+
+        // Handle valid configuration.
+        if (cfg) {
+          const stages = cfg.stages()
+
+          // Collect the actions as a map to deduplicate.
+          const actions: { [key: string]: Action } = {}
+
+          // Iterate over the current deployment stages.
+          for (const stage of dep.payload.stages) {
+            // Check that the stage is valid and contains actions.
+            if (stages[stage] && stages[stage]!.actions) {
+              // Iterate over the stage actions.
+              for (const [key, action] of util.entries(stages[stage]!.actions)) {
+                // Check if the action has already been collected. This may be
+                // the case when another parallel stage defines the same action
+                // so only the first is used.
+                if (!actions[key]) {
+                  actions[key] = {
+                    identifier: key,
+                    label: action.name,
+                    description: action.description || key,
+                  }
+                }
+              }
+            }
+          }
+
+          // Collect the actions as an array.
+          const items = util.values(actions)
+
+          // If there are any further actions then the deployment is considered
+          // incomplete.
+          if (items.length > 0) {
+            await status.incomplete(this, env, run, dep, items, payload.output)
+          }
+          // Otherwise the deployment is a success.
+          else {
+            await status.success(this, env, run, dep, payload.url || cfg?.url(), payload.output)
+          }
+        }
+        // Otherwise something went wrong loading the deployment configuration
+        // but set the status to success anyway.
+        else {
+          await status.success(this, env, run, dep, payload.url, payload.output)
+        }
+
+        break
+      }
+
+      case 'failure': {
+        await status.failure(this, env, run, dep, payload.output)
+      }
+    }
   }
 
   /**
