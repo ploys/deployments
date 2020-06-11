@@ -42,15 +42,9 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 12.x
-        registry-url: https://npm.pkg.github.com
 
     - name: Install Package
       run: yarn install
 
     - name: Test Package
       run: yarn run test
-
-    - name: Publish Packages
-      run: npx lerna publish from-package --yes --no-verify-access
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
