@@ -1,18 +1,21 @@
 {
   "name": "@ploys/deployments-config",
-  "version": "1.0.0",
-  "description": "Automated continuous deployment and delivery",
+  "version": "0.1.0",
+  "description": "Deployments application configuration",
   "author": "Daniel Balcomb <daniel.balcomb@gmail.com>",
   "license": "ISC",
-  "private": true,
   "repository": "https://github.com/ploys/deployments",
   "homepage": "https://github.com/ploys/deployments#readme",
   "bugs": "https://github.com/ploys/deployments/issues",
   "keywords": [
+    "ploys",
     "deployments"
   ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "files": [
+    "lib/"
+  ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "clean": "tsc --build tsconfig.build.json --clean"
@@ -28,5 +31,8 @@
     "@types/jest": "^25.2.3",
     "@types/js-yaml": "^3.12.4",
     "@types/node": "^14.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
