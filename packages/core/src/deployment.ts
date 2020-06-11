@@ -90,6 +90,21 @@ export async function get(
 }
 
 /**
+ * Loads a deployment with the given identifier.
+ *
+ * @param ctx - The repository context.
+ * @param id - The deployment identifier.
+ *
+ * @returns The promised deployment.
+ */
+export async function load(ctx: Repository, id: number): Promise<Deployment> {
+  const api = await ctx.api()
+  const res = await api.repos.getDeployment({ ...ctx.params(), deployment_id: id })
+
+  return res.data as Deployment
+}
+
+/**
  * Creates a deployment for the given check run.
  *
  * @param ctx - The repository context.

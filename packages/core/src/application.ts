@@ -9,6 +9,7 @@ import type { Types } from '@octokit/auth-app'
 import type { AuthInterface } from '@octokit/types'
 
 import { Installation } from './installation'
+import { Status } from './status'
 import { Event } from './event'
 
 /**
@@ -76,6 +77,7 @@ export class Application {
     hooks.on('check_run.rerequested', this.onCheckRunRerequested.bind(this))
     hooks.on('check_run.created', this.onCheckRunCreated.bind(this))
     hooks.on('check_suite.completed', this.onCheckSuiteCompleted.bind(this))
+    hooks.on('repository_dispatch', this.onRepositoryDispatch.bind(this))
     hooks.on('error', error => console.error(error))
   }
 
@@ -335,5 +337,24 @@ export class Application {
     const repo = await inst.repository(event.payload.repository.id)
 
     await repo.completed(sha, env, suite)
+  }
+
+  /**
+   * Handles the *repository dispatch* event.
+   *
+   * @param event - The event object.
+   */
+  private async onRepositoryDispatch(
+    event: Webhooks.WebhookEvent<Webhooks.WebhookPayloadRepositoryDispatch>
+  ): Promise<void> {
+    const action = event.payload.action
+    const payload = event.payload.client_payload
+
+    if (action === 'deployment_status') {
+      const inst = await this.installation(event)
+      const repo = await inst.repository(event.payload.repository.id)
+
+      await repo.status((payload as unknown) as Status)
+    }
   }
 }

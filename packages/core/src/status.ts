@@ -5,6 +5,16 @@ import { Deployment } from './deployment'
 import { Repository } from './repository'
 
 /**
+ * The deployment status type.
+ */
+export type Status = {
+  deployment: number
+  state: string
+  output?: string
+  url?: string
+}
+
+/**
  * Sets the deployment check status to missing.
  *
  * @param ctx - The repository context.
@@ -174,13 +184,15 @@ export async function started(
  * @param run - The associated check run.
  * @param dep - The deployment.
  * @param url - The deployment environment url.
+ * @param text - The output text to display.
  */
 export async function success(
   ctx: Repository,
   env: string,
   run: CheckRun,
   dep: Deployment,
-  url?: string
+  url?: string,
+  text?: string
 ): Promise<void> {
   const api = await ctx.api()
 
@@ -205,6 +217,7 @@ export async function success(
     output: {
       title: 'Deployed',
       summary: `Deployed to the ${env} environment.`,
+      text,
     },
   })
 }
@@ -216,12 +229,14 @@ export async function success(
  * @param env - The deployment environment identifier.
  * @param run - The associated check run.
  * @param dep - The deployment.
+ * @param text - The output text to display.
  */
 export async function failure(
   ctx: Repository,
   env: string,
   run: CheckRun,
-  dep: Deployment
+  dep: Deployment,
+  text?: string
 ): Promise<void> {
   const api = await ctx.api()
 
@@ -245,6 +260,7 @@ export async function failure(
     output: {
       title: 'Failed',
       summary: `Failed deployment to the ${env} environment.`,
+      text,
     },
   })
 }
@@ -257,13 +273,15 @@ export async function failure(
  * @param run - The associated check run.
  * @param dep - The deployment.
  * @param actions - The further deployment actions.
+ * @param text - The output text to display.
  */
 export async function incomplete(
   ctx: Repository,
   env: string,
   run: CheckRun,
   dep: Deployment,
-  actions: RestEndpointMethodTypes['checks']['create']['parameters']['actions']
+  actions: RestEndpointMethodTypes['checks']['create']['parameters']['actions'],
+  text?: string
 ): Promise<void> {
   const api = await ctx.api()
 
@@ -288,6 +306,7 @@ export async function incomplete(
     output: {
       title: 'Action required',
       summary: `Action required for deployment to the ${env} environment.`,
+      text,
     },
   })
 }
