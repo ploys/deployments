@@ -27,7 +27,7 @@
     "@octokit/webhooks": "^7.6.2",
     "@ploys/deployments-config": "^0.1.0",
     "await-to-js": "^2.1.1",
-    "eventsource": "^1.0.7"
+    "eventsource": "^2.0.2"
   },
   "devDependencies": {
     "@ploys/harness": "0.1.0",
